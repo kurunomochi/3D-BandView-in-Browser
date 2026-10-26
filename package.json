@@ -1,0 +1,20 @@
+{
+  "name": "kurumochi-blog",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Development checks for the Rust blog and Blender portfolio",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "vendor:three": "node scripts/vendor-three.mjs",
+    "format": "prettier --write public tests README.md package.json .github/workflows/ci.yml compose.yaml",
+    "format:check": "prettier --check public tests README.md package.json .github/workflows/ci.yml compose.yaml",
+    "test": "node --test tests/frontend.test.mjs tests/journal.test.mjs",
+    "test:api": "node tests/api-smoke.mjs"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "three": "0.186.1"
+  }
+}

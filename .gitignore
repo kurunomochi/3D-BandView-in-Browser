@@ -1,0 +1,27 @@
+/target/
+/node_modules/
+/tmp/
+/artifacts/
+/data/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+.DS_Store
+Thumbs.db
+# Local Blender source projects and generated renders, not web assets.
+/*.py
+/*.png
+/*.blend*
+/*.zip
+/apartment_night/
+/blender_output/
+/fuji_output/
+/output/
+# Historical deployment records are machine-specific.
+/deploy/*
+!/deploy/portfolio.service
+!/deploy/nginx-locations.conf
+!/deploy/apache-proxy.conf

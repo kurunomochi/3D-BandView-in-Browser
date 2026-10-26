@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta name="robots" content="noindex,nofollow" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>后台 · kurumochi / BLOG</title>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">KURUMOCHI / ADMIN</p>
+          <h1>文章管理</h1>
+        </div>
+        <div>
+          <a href="/studio.html">作品管理</a> ·
+          <a href="index.html">返回博客</a>
+        </div>
+      </header>
+
+      <section class="panel login-panel" id="login-panel">
+        <h2>管理员登录</h2>
+        <form id="login-form">
+          <label
+            >账号<input name="username" autocomplete="username" required
+          /></label>
+          <label
+            >密码<input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+          /></label>
+          <button type="submit">登录</button>
+          <p class="message" id="login-message" role="alert"></p>
+        </form>
+      </section>
+
+      <section class="dashboard" id="dashboard" hidden>
+        <div class="dashboard-toolbar">
+          <h2>文章列表</h2>
+          <div class="toolbar-actions">
+            <button id="new-post" type="button">新建文章</button>
+            <button class="secondary" id="logout" type="button">退出</button>
+          </div>
+        </div>
+        <p class="message" id="dashboard-message" role="status"></p>
+        <div class="post-list" id="post-list"></div>
+
+        <form class="panel editor" id="post-form" hidden>
+          <div class="editor-heading">
+            <h2 id="editor-title">新建文章</h2>
+            <button class="secondary" id="cancel-edit" type="button">
+              取消
+            </button>
+          </div>
+          <div class="form-grid">
+            <label>标题<input name="title" required /></label>
+            <label
+              >日期<input name="date" placeholder="2026.09.22" required
+            /></label>
+            <label
+              >分类<input name="category" placeholder="STUDY" required
+            /></label>
+            <label
+              >封面路径<input
+                name="image"
+                value="assets/cover-featured.svg"
+                required
+            /></label>
+          </div>
+          <label>摘要<input name="excerpt" required /></label>
+          <label
+            >正文<textarea
+              name="content"
+              rows="12"
+              placeholder="每一行会保存为一个正文段落"
+              required
+            ></textarea>
+          </label>
+          <label
+            >插入视频<input id="post-video" type="file" accept="video/mp4,.mp4"
+          /></label>
+          <p>
+            MP4 最大 100 MB，推荐 H.264 + AAC
+            编码。上传后插入到正文光标处，保存文章后发布。
+          </p>
+          <p class="message" id="video-message" role="status"></p>
+          <button type="submit">保存文章</button>
+        </form>
+      </section>
+    </main>
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/admin.js?v=20261024-video"></script>
+  </body>
+</html>

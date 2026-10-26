@@ -1,0 +1,2533 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="以个人博客为实例的 Rust 异步工程教程：Tokio、TCP、Axum、共享状态、文件持久化、取消与测试。"
+    />
+    <title>从这个博客学习 Rust 异步工程 · kurumochi</title>
+    <style>
+      :root {
+        --ink: #1b302c;
+        --muted: #53645d;
+        --paper: #f7f8f4;
+        --line: #dce3da;
+        --accent: #276b53;
+        --code: #172822;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 28px;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          "Microsoft YaHei",
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.85;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 4px;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 12px;
+        background: #fff;
+        color: var(--ink);
+      }
+      button:hover {
+        background: #edf3eb;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid #84ae96;
+        outline-offset: 4px;
+      }
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 280px;
+        background: #edf1e9;
+        border-right: 1px solid var(--line);
+        padding: 30px 22px;
+        overflow: auto;
+      }
+      .brand {
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .sidebar h2 {
+        font-size: 22px;
+        margin: 12px 0 20px;
+      }
+      .sidebar input {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid #b8c8ba;
+        border-radius: 6px;
+        background: #fbfcf9;
+      }
+      .search-label {
+        font-size: 12px;
+        display: block;
+        margin-bottom: 6px;
+      }
+      nav {
+        margin-top: 20px;
+      }
+      nav a {
+        display: block;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        line-height: 1.55;
+        padding: 9px 6px;
+        border-bottom: 1px solid #dde5d9;
+      }
+      nav a:hover {
+        color: var(--accent);
+        background: #fff;
+      }
+      nav a.active {
+        color: var(--accent);
+        font-weight: 700;
+        background: #fff;
+        border-radius: 5px;
+      }
+      main {
+        max-width: 1180px;
+        margin-left: 280px;
+        padding: 54px 64px 100px;
+      }
+      .hero {
+        padding: 10px 0 42px;
+        border-bottom: 2px solid var(--accent);
+      }
+      .hero h1 {
+        font-size: clamp(32px, 4vw, 52px);
+        line-height: 1.3;
+        margin: 20px 0;
+      }
+      .hero p {
+        font-size: 18px;
+        max-width: 740px;
+      }
+      .tag {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #e6eee1;
+        color: #315c43;
+        border-radius: 5px;
+        font-size: 12px;
+        margin: 0 8px 8px 0;
+      }
+      .intro-links {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        font-size: 14px;
+      }
+      article > section {
+        padding: 44px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      section h2 {
+        font-size: 27px;
+        line-height: 1.5;
+        margin: 0 0 24px;
+      }
+      h3 {
+        font-size: 20px;
+        margin: 30px 0 12px;
+      }
+      h4 {
+        margin: 0 0 12px;
+      }
+      p {
+        margin: 14px 0;
+      }
+      code {
+        font-family: Consolas, "Cascadia Code", monospace;
+        font-size: 0.91em;
+        background: #e8eee5;
+        padding: 2px 5px;
+        border-radius: 4px;
+        overflow-wrap: anywhere;
+      }
+      .codebox {
+        margin: 20px 0;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--code);
+        color: #e4f0e8;
+      }
+      .codebar {
+        padding: 7px 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #223a31;
+        font-size: 12px;
+        color: #bed0c4;
+      }
+      .codebar button {
+        font-size: 12px;
+        background: #314c40;
+        border-color: #506f5d;
+        color: #eaf6ee;
+      }
+      .codebox pre {
+        margin: 0;
+        padding: 20px;
+        overflow: auto;
+        font-size: 13px;
+        line-height: 1.75;
+        tab-size: 4;
+      }
+      .codebox code {
+        background: none;
+        padding: 0;
+        color: inherit;
+        white-space: pre;
+        overflow-wrap: normal;
+        font-size: inherit;
+      }
+      .source,
+      .reference,
+      .small {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .source {
+        margin-bottom: -10px;
+      }
+      .table-wrap {
+        overflow: auto;
+        margin: 22px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        min-width: 520px;
+      }
+      th {
+        text-align: left;
+        background: #e9efe4;
+      }
+      td,
+      th {
+        padding: 13px 15px;
+        border: 1px solid var(--line);
+        vertical-align: top;
+      }
+      td:first-child {
+        font-weight: 600;
+      }
+      .note {
+        padding: 18px 22px;
+        margin: 24px 0;
+        background: #edf2e6;
+        border-left: 4px solid #568359;
+        border-radius: 0 8px 8px 0;
+      }
+      .flow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 20px;
+        background: #edf1e9;
+        border-radius: 10px;
+        margin: 22px 0;
+        font-size: 14px;
+      }
+      .flow span {
+        padding: 7px 12px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+      }
+      .flow b {
+        color: #70947b;
+      }
+      details {
+        margin: 18px 0;
+        border: 1px solid var(--line);
+        padding: 14px 18px;
+        background: #fff;
+        border-radius: 8px;
+      }
+      summary {
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      details p {
+        font-size: 15px;
+      }
+      .roadmap li {
+        padding: 8px 0 14px 6px;
+      }
+      .sources {
+        columns: 2;
+        font-size: 14px;
+      }
+      .sim {
+        padding: 24px;
+        border: 1px solid #aebfa9;
+        border-radius: 10px;
+        background: #fff;
+        margin: 24px 0;
+      }
+      .sim pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #edf1e9;
+        padding: 15px;
+        font-size: 14px;
+      }
+      .controls {
+        display: flex;
+        gap: 12px;
+      }
+      .status {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 280px;
+        height: 4px;
+        background: var(--accent);
+        z-index: 10;
+        width: 0;
+      }
+      #empty {
+        padding: 30px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .skip {
+        position: absolute;
+        left: -10000px;
+      }
+      .skip:focus {
+        left: 20px;
+        top: 10px;
+        z-index: 50;
+        background: #fff;
+        padding: 10px;
+      }
+      @media (min-width: 1600px) {
+        main {
+          margin-right: auto;
+          margin-left: calc(280px + (100vw - 1600px) / 2);
+        }
+      }
+      @media (max-width: 1050px) {
+        .sidebar {
+          width: 235px;
+          padding: 24px 16px;
+        }
+        main {
+          margin-left: 235px;
+          padding: 40px 30px;
+        }
+        #progress {
+          left: 235px;
+        }
+        section h2 {
+          font-size: 24px;
+        }
+      }
+      @media (max-width: 760px) {
+        .sidebar {
+          position: static;
+          width: auto;
+          padding: 24px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .sidebar h2 {
+          margin: 8px 0;
+        }
+        nav {
+          max-height: 230px;
+          overflow: auto;
+        }
+        main {
+          margin: 0;
+          padding: 28px 22px 60px;
+        }
+        #progress {
+          left: 0;
+        }
+        body {
+          font-size: 15px;
+        }
+        .sources {
+          columns: 1;
+        }
+        .hero p {
+          font-size: 16px;
+        }
+        section h2 {
+          font-size: 22px;
+        }
+        .codebox pre {
+          font-size: 12px;
+          padding: 15px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      @media print {
+        .sidebar,
+        #progress,
+        .copy,
+        .intro-links,
+        .controls,
+        .skip {
+          display: none !important;
+        }
+        main {
+          max-width: none;
+          margin: 0;
+          padding: 0;
+          font-size: 11pt;
+        }
+        .hero {
+          padding: 0 0 15px;
+        }
+        .hero h1 {
+          font-size: 26pt;
+        }
+        article > section {
+          padding: 20px 0;
+          display: block !important;
+        }
+        h2,
+        h3 {
+          break-after: avoid;
+        }
+        .codebox,
+        .codebar {
+          background: #f1f3ed !important;
+          color: #15291d !important;
+        }
+        .codebox pre {
+          white-space: pre-wrap;
+          font-size: 9pt;
+        }
+        .codebox code {
+          white-space: pre-wrap;
+        }
+        a {
+          color: inherit;
+        }
+        table {
+          min-width: 0;
+        }
+        .sources {
+          columns: 1;
+        }
+        details {
+          break-inside: auto;
+        }
+        #empty {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">跳到正文</a>
+    <div id="progress" aria-hidden="true"></div>
+    <aside class="sidebar">
+      <div class="brand">KURUMOCHI / ENGINEERING NOTES</div>
+      <h2>Rust async<br />从博客到网络</h2>
+      <label for="search" class="search-label">按关键词筛选章节</label
+      ><input
+        id="search"
+        type="search"
+        placeholder="试试：TCP、锁、超时…"
+        autocomplete="off"
+      />
+      <p id="search-status" class="status" role="status"></p>
+      <nav aria-label="教程目录">
+        <a href="#map">01 · 先看清这个博客是怎样运行的</a
+        ><a href="#network">02 · TCP、HTTP、HTTPS 和端口，分别负责什么</a
+        ><a href="#future">03 · async / await 的真正含义</a
+        ><a href="#runtime">04 · Tokio 运行时与项目启动</a
+        ><a href="#concurrency">05 · 顺序、并发、并行与 spawn</a
+        ><a href="#echo">06 · 先写一个 TCP 字节回显服务器</a
+        ><a href="#frames">07 · TCP 没有消息边界：把“粘包”还原成字节流</a
+        ><a href="#axum">08 · 回到博客：Axum 如何把 HTTP 变成函数参数</a
+        ><a href="#state">09 · Arc、Mutex、RwLock：共享不等于随便修改</a
+        ><a href="#storage">10 · 保存文章：为什么持着写锁去 await 文件 I/O</a
+        ><a href="#errors">11 · Result、错误转换与 HTTP 失败语义</a
+        ><a href="#cancellation"
+          >12 · 超时、select! 与取消：停止等待不等于撤销操作</a
+        ><a href="#backpressure">13 · 上传、背压与阻塞工作</a
+        ><a href="#ownership">14 · async move、Send、Sync 和 &#x27;static</a
+        ><a href="#shutdown">15 · 部署与优雅停止：异步程序也有生命周期</a
+        ><a href="#testing">16 · 用实验验证，而不是只看 println</a
+        ><a href="#evolution">17 · 这个工程接下来应该怎样演进</a
+        ><a href="#practice">18 · 建议按这六个阶段动手</a
+        ><a href="#review">19 · 自测、术语表和下一轮阅读</a>
+      </nav>
+    </aside>
+    <main id="main">
+      <header class="hero">
+        <span class="tag">初学者友好</span><span class="tag">19 章项目讲解</span
+        ><span class="tag">3 个可运行示例</span>
+        <h1>从这个博客，<br />理解 Rust 异步工程。</h1>
+        <p>
+          沿着一次真实请求，读懂
+          TCP、Future、Tokio、Axum、共享状态与文件保存。每个概念都回到你自己的代码。
+        </p>
+        <div class="intro-links">
+          <a href="README.md">练习与运行说明</a
+          ><a href="../../README.md">项目 README</a
+          ><button id="print" type="button">打印 / 保存为 PDF</button>
+        </div>
+        <p class="small">
+          离线可读 · 无外部字体或脚本 · 源码基线 5d1e093 · 2026-10-20<br />建议分多次阅读，先完成第
+          1–7 章与 TCP 实验，再继续共享状态和持久化。
+        </p>
+      </header>
+      <aside class="note">
+        阅读代码时请区分：<strong>examples 目录中的三个程序可直接运行</strong
+        >；“项目源码”需要放回原有模块理解；其余短片段用于解释语义，出现
+        some_async_operation 等名称时代表待实现的占位操作。
+      </aside>
+      <p id="empty" hidden>没有匹配的章节，请尝试更短的关键词。</p>
+      <article>
+        <section id="map">
+          <h2>01 · 先看清这个博客是怎样运行的</h2>
+          <p>
+            你已经有了一个很适合学习异步工程的项目：访问量不必很大，但它确实会接收网络连接、解析
+            HTTP、检查登录、共享内存、上传图片、保存文件，并在 Linux
+            上长期运行。学习目标是能解释这些环节如何协作，而不仅是能写出一个
+            <code>async fn</code>。
+          </p>
+          <p>
+            本教程以仓库 <code>5d1e093</code> 的后端结构为基线，编写日期为
+            2026-10-20。前一次代码整理已拆分模块，但仅凭静态页面上线不能断言服务器二进制也更新了；这里讲的是你本地仓库中的实现。以下将明确区分“当前已有”和“后续练习”，不会把建议当成项目已经具备的功能。
+          </p>
+          <div class="flow" aria-label="请求处理链">
+            <span>浏览器</span><b>→</b><span>HTTPS 反向代理</span><b>→</b
+            ><span>TCP / HTTP</span><b>→</b><span>Axum 路由</span><b>→</b
+            ><span>处理函数</span><b>→</b><span>内存 / JSON 文件</span>
+          </div>
+          <p>
+            首页首先请求 HTML、CSS、JavaScript 和视频，随后
+            <code>public/script.js</code> 通过
+            <code>fetch("/api/posts")</code>
+            取得文章数组。网页不是直接读取磁盘上的
+            <code>posts.json</code>：启动时后端把数据加载到内存，GET
+            接口再从共享状态读取。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>文件</th>
+                  <th>职责</th>
+                  <th>重点问题</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>src/main.rs</td>
+                  <td>启动、状态组装、路由、停止信号</td>
+                  <td>哪个 Future 长期运行？</td>
+                </tr>
+                <tr>
+                  <td>src/config.rs</td>
+                  <td>读取环境变量</td>
+                  <td>为什么在开始接请求前校验？</td>
+                </tr>
+                <tr>
+                  <td>src/auth.rs</td>
+                  <td>登录和路由鉴权</td>
+                  <td>为什么先鉴权再读大文件？</td>
+                </tr>
+                <tr>
+                  <td>src/posts.rs / works.rs</td>
+                  <td>文章与作品业务</td>
+                  <td>如何防止并发请求互相覆盖？</td>
+                </tr>
+                <tr>
+                  <td>src/storage.rs</td>
+                  <td>JSON 文件读取和替换</td>
+                  <td>什么时候可以宣布保存成功？</td>
+                </tr>
+                <tr>
+                  <td>src/error.rs</td>
+                  <td>业务错误转 HTTP 响应</td>
+                  <td>哪些错误给用户看，哪些只记日志？</td>
+                </tr>
+                <tr>
+                  <td>tests/integration.mjs</td>
+                  <td>启动独立进程测试</td>
+                  <td>重启后还在，才算真的持久化了吗？</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>一个请求有两条路径</h3>
+          <p>
+            <strong>读文章：</strong>收到 GET → 路由匹配 → 提取 State → 申请读锁
+            → 克隆结果 → 释放锁 → 序列化 JSON →
+            发回响应。<strong>保存文章：</strong>收到 POST → 检查令牌 → 解析
+            JSON → 校验 → 申请写锁 → 生成新副本 → 保存文件 → 替换内存 → 返回
+            201。
+          </p>
+          <p>
+            先顺着这两条路径读代码。以后再引入数据库、消息队列或缓存，你仍然需要回答同样的问题：谁拥有数据，谁可以同时修改，什么时候对外承诺成功？
+          </p>
+        </section>
+        <section id="network">
+          <h2>02 · TCP、HTTP、HTTPS 和端口，分别负责什么</h2>
+          <h3>把网络层次拆开</h3>
+          <p>
+            IP
+            让数据能够被发送到网络中的目标地址；端口帮助操作系统把流量交给某个套接字；TCP
+            提供可靠、有序的字节流；HTTP
+            在这些字节上定义请求方法、路径、头部、正文和响应状态。TLS
+            增加加密和身份校验，常见的 HTTPS/HTTP 1.1、HTTP/2 使用它。HTTP/3
+            使用 QUIC/UDP，所以“所有 HTTP 都走 TCP”并不准确。本项目 Rust
+            端明确监听的是 TCP。
+          </p>
+          <p>
+            已有部署中，浏览器访问域名的 HTTPS 服务，Apache
+            再把请求转给服务器内的 Rust 端口。公网 TLS 在代理处处理，Rust
+            看到的是回环地址上的
+            HTTP。两段连接是不同的连接；代理可能复用后端连接，不能假定“一个浏览器对应一个后端
+            TCP socket”。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>地址</th>
+                  <th>含义</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>127.0.0.1:3000</td>
+                  <td>只接受本机回环接口上的连接，适合反向代理后面的服务</td>
+                </tr>
+                <tr>
+                  <td>0.0.0.0:3000</td>
+                  <td>
+                    绑定所有 IPv4 本地接口；实际是否公网可达还取决于防火墙/NAT
+                  </td>
+                </tr>
+                <tr>
+                  <td>127.0.0.1:0</td>
+                  <td>请操作系统分配一个可用端口，适合自动测试</td>
+                </tr>
+                <tr>
+                  <td>域名:443</td>
+                  <td>通常是 HTTPS 入口；域名经 DNS 解析后再连接 IP</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>TCP 建立连接与传输</h3>
+          <p>
+            典型连接建立过程是 SYN → SYN-ACK → ACK。这个握手建立 TCP
+            状态，不代表网站登录成功。TCP
+            通过序号、确认、重传等机制处理丢失和顺序；拥塞控制关注网络承受能力，流量控制关注接收端承受能力。它们都不能替你的业务判断“文章有没有写入
+            JSON”。
+          </p>
+          <p>
+            服务端的 <code>TcpListener</code> 是监听入口。每次
+            <code>accept()</code> 得到一个新的
+            <code>TcpStream</code>，代表一条已建立连接；<code>accept</code>
+            不等于读到了完整 HTTP
+            请求。监听端口可以服务许多连接，操作系统用两端地址和端口等信息区分它们。
+          </p>
+          <h3>连接复用、关闭和成功确认</h3>
+          <p>
+            HTTP/1.1 通常支持持久连接，一条 TCP 连接可以处理多个请求。HTTP/2
+            还支持在一个连接里复用多个流；具体是否启用由客户端、代理和服务配置决定。不要从
+            TCP 连接数直接推算同时执行的业务请求数。
+          </p>
+          <p>
+            对非空缓冲区读取时，<code>read</code> 返回 0
+            通常表示对端发送方向已经结束且已无剩余数据。TCP
+            可以半关闭：对端不再发送，但仍可以接收。<code>write_all</code>
+            成功只表示这些字节已被本地写出接口接受，不表示对方应用已处理、更不表示对方磁盘已经保存。
+          </p>
+          <p class="reference">
+            进一步阅读：<a href="https://www.rfc-editor.org/rfc/rfc9293.html"
+              >TCP 标准 RFC 9293</a
+            >。
+          </p>
+        </section>
+        <section id="future">
+          <h2>03 · async / await 的真正含义</h2>
+          <p>
+            <code>async fn</code> 调用产生一个
+            Future，可以理解为“保存了执行进度的计算对象”。它不会自动为你创建线程。普通
+            async 函数体在 Future 被轮询时才推进；把 Future 放在变量里、不 await
+            也不提交给运行时，函数体就不会自己完成。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>async fn load_title() -&gt; String {
+    println!(&quot;函数体开始&quot;);
+    &quot;我的博客&quot;.to_owned()
+}
+
+// 在 async 上下文里：
+let future = load_title(); // 还没有打印
+println!(&quot;先执行这里&quot;);
+let title = future.await; // 驱动 Future，得到 String</code></pre>
+          </div>
+          <h3>.await 会发生什么</h3>
+          <p>
+            如果被等待的操作已经完成，执行可以继续，不一定切换任务。如果尚未就绪，当前任务返回等待状态，运行时有机会处理其他任务；资源就绪后通过唤醒机制让它再次被调度。因此，<strong
+              >“异步等待不占住工作线程”有前提：所调用的实现确实能及时让出执行权。</strong
+            >
+          </p>
+          <p>
+            Future 接口中的 <code>Poll::Ready(value)</code> 表示完成，<code
+              >Poll::Pending</code
+            >
+            表示暂不能完成。Waker
+            是通知调度器“这个任务可能可以继续了”的机制，而不是直接执行后续业务。Tokio
+            负责把任务调度与网络、定时器等事件衔接起来，应用代码通常不需要自己实现
+            poll。
+          </p>
+          <p>
+            把 <code>create_post</code> 想象成状态机：尚未取得锁 → 等待写锁 →
+            已有新文章副本 → 等待文件保存 → 更新内存 →
+            返回。跨等待点仍要使用的局部变量需要保存在 Future
+            中，所以大缓冲区、借用和锁守卫都会影响任务的内存及生命周期。
+          </p>
+          <aside class="note">
+            不要把 <code>.await</code> 当成“开一个后台线程”，也不要以为每次
+            await 都必然暂停。你可以先会使用 Future；Pin
+            的详细实现可以放到第二轮学习，但需要知道它用于约束某些值在被固定后不能随意移动，并不是“锁定到某个线程”。
+          </aside>
+          <p class="reference">
+            进一步阅读：<a href="https://tokio.rs/tokio/tutorial/async"
+              >Tokio：Async in depth</a
+            >。
+          </p>
+        </section>
+        <section id="runtime">
+          <h2>04 · Tokio 运行时与项目启动</h2>
+          <p>
+            Rust 语言提供 Future/async/await 的基础机制；Tokio
+            提供运行它们需要的调度器、I/O 支持、定时器及同步原语。<code
+              >#[tokio::main]</code
+            >
+            为程序建立运行时，再驱动 async main。项目启用了
+            <code>rt-multi-thread</code
+            >，使用默认的多线程运行时；不需要手动为每个 HTTP 请求创建系统线程。
+          </p>
+          <p>
+            启动和接请求是两个阶段。当前 main
+            先读配置、检查静态目录、加载文章和作品、构建状态，最后绑定端口开始服务。加载阶段的几个
+            await
+            按代码顺序执行，这里选择顺序初始化便于失败定位，不是因为异步代码只能串行。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/main.rs">src/main.rs:83</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let listener = TcpListener::bind(config.bind).await?;
+    println!(&quot;blog server listening on http://{}&quot;, listener.local_addr()?);
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+    Ok(())
+}</code></pre>
+          </div>
+          <p>
+            <code>bind(...).await?</code> 得到监听器。<code
+              >axum::serve(listener, app)</code
+            >
+            返回服务相关对象，末尾的 await
+            驱动服务长期运行；它不会在处理完一个请求后就退出。框架内部负责接受连接与处理
+            HTTP，你只需要提供业务路由。
+          </p>
+          <h3>为什么用了 .await?</h3>
+          <p>
+            很多异步 I/O 的结果是
+            <code>Future&lt;Output = Result&lt;T, E&gt;&gt;</code>。await 先得到
+            Result，问号再把错误向调用者传播：成功取出
+            T，失败提前返回。问号不会重试，不会忽略错误，也不会自动把网络错误变成
+            HTTP 500；是否能转换到目标错误类型，取决于函数签名及转换实现。
+          </p>
+          <h3>Cargo 的 feature 是编译期能力选择</h3>
+          <p>
+            本项目的 Tokio 配置启用了
+            <code>macros</code
+            >、<code>rt-multi-thread</code>、<code>fs</code>、<code>net</code>、<code>sync</code>、<code>signal</code>、<code>io-util</code>。配套练习在
+            dev-dependencies 中显式启用了 <code>time</code>，用于 sleep 和
+            timeout。feature 不是运行时开关；新增功能后缺少对应
+            feature，常会看到模块无法导入。
+          </p>
+          <p class="reference">
+            进一步阅读：<a href="https://tokio.rs/tokio/tutorial"
+              >Tokio 官方入门</a
+            >。
+          </p>
+        </section>
+        <section id="concurrency">
+          <h2>05 · 顺序、并发、并行与 spawn</h2>
+          <p>
+            并发指多个任务在一个时间段内交错推进；并行指在同一时刻由多个执行单元同时工作。一个线程也能并发等待许多连接，多线程也不保证你的业务一定变快。先判断工作时间主要花在“计算”还是“等待”。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>写法</th>
+                  <th>执行方式</th>
+                  <th>注意点</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>a().await; b().await;</td>
+                  <td>先等 A 完成，再开始 B</td>
+                  <td>适合有先后依赖的步骤</td>
+                </tr>
+                <tr>
+                  <td>tokio::join!(a(), b())</td>
+                  <td>在当前任务中并发轮询两个 Future</td>
+                  <td>不创建两个独立线程；一支阻塞会拖住另一支</td>
+                </tr>
+                <tr>
+                  <td>tokio::spawn(a())</td>
+                  <td>创建由运行时调度的独立任务</td>
+                  <td>Future 通常要 Send + &#x27;static</td>
+                </tr>
+                <tr>
+                  <td>tokio::select!</td>
+                  <td>并发等待，选择某个就绪分支执行</td>
+                  <td>未选中的分支 Future 会被丢弃，需考虑取消</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            特别容易混淆的是 JoinHandle：spawn 已经把任务交给运行时，稍后 await
+            handle 是等待它的结果，不是那时才让任务开始。丢弃 JoinHandle
+            通常只是放弃获取结果，任务会继续；显式 abort
+            才请求取消。运行时退出也不会让你的所有后台工作神奇地保存完成。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>终端</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>cargo run --example async_basics</code></pre>
+          </div>
+          <p>
+            你会先看到“Created a future”，再看到 lazy 任务的 started。顺序两个
+            300ms 等待通常约 600ms，join 通常约
+            300ms；实际耗时受调度和系统负载影响，这只是语义演示，不是精确基准。观察
+            spawned 的输出次序可能变化，不能依赖某个固定调度顺序。
+          </p>
+          <details>
+            <summary>展开完整可运行源码 · async_basics.rs</summary>
+            <div class="codebox">
+              <div class="codebar">
+                <span>rust</span
+                ><button type="button" class="copy">复制</button>
+              </div>
+              <pre><code>//! Run: cargo run --example async_basics
+use std::time::Instant;
+use tokio::time::{Duration, sleep};
+
+async fn job(name: &amp;&#x27;static str) -&gt; &amp;&#x27;static str {
+    println!(&quot;{name}: started&quot;);
+    sleep(Duration::from_millis(300)).await;
+    println!(&quot;{name}: finished&quot;);
+    name
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let not_started = job(&quot;lazy&quot;);
+    println!(&quot;Created a future; its body has not run yet.&quot;);
+    not_started.await;
+
+    let start = Instant::now();
+    job(&quot;sequential A&quot;).await;
+    job(&quot;sequential B&quot;).await;
+    println!(&quot;sequential: {:?}&quot;, start.elapsed());
+
+    let start = Instant::now();
+    let (a, b) = tokio::join!(job(&quot;joined A&quot;), job(&quot;joined B&quot;));
+    println!(&quot;join: {a}, {b}, {:?}&quot;, start.elapsed());
+
+    let handle = tokio::spawn(async move { job(&quot;spawned&quot;).await });
+    println!(&quot;The spawned task can progress before we await its handle.&quot;);
+    println!(&quot;task result: {}&quot;, handle.await?);
+    Ok(())
+}</code></pre>
+            </div>
+          </details>
+          <p class="reference">
+            进一步阅读：<a href="https://tokio.rs/tokio/tutorial/spawning"
+              >Tokio：Spawning</a
+            >。
+          </p>
+        </section>
+        <section id="echo">
+          <h2>06 · 先写一个 TCP 字节回显服务器</h2>
+          <p>
+            为了看见 Axum 下面的一层，我们暂时绕开
+            HTTP：服务端收到什么字节，就回传什么字节。练习在回环地址
+            <code>127.0.0.1:4000</code> 运行，不读取博客配置或文章数据。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>终端</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code># 终端一：保持运行
+cargo run --example tcp_echo
+
+# 终端二：发送两条带长度头的测试消息
+cargo run --example tcp_frames -- client 127.0.0.1:4000</code></pre>
+          </div>
+          <p>
+            客户端虽然使用了长度头，但字节回显服务不理解它，只是原样返回全部字节；客户端再按自己的规则解码，因此也能完成往返。这正说明：<strong
+              >TCP 只负责字节传输，消息语义由端点协议决定。</strong
+            >别用浏览器访问这个端口来验证网页，它不是 HTTP 服务。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let n = stream.read(&amp;mut buffer).await?;
+if n == 0 {
+    return Ok(());
+}
+stream.write_all(&amp;buffer[..n]).await?;</code></pre>
+          </div>
+          <p>
+            <code>buffer</code> 是可重复使用的 4096 字节数组，n
+            是这次实际读到的字节数，不是总消息长度。只写
+            <code>&amp;buffer[..n]</code
+            >，否则可能把缓冲区里上一次的残留数据也发回去。write_all
+            会尝试把整个切片交给写入接口；普通 write 可能只写一部分。
+          </p>
+          <h3>为什么 accept 后要 spawn</h3>
+          <p>
+            如果你在 accept 循环里直接
+            <code>echo(socket).await</code
+            >，就要等这个连接处理结束，才继续接受下一条连接。示例把每条连接放入
+            JoinSet 管理的任务，监听循环便能继续。JoinSet
+            还让我们回收已完成任务的结果，而不是积攒无人检查的句柄。
+          </p>
+          <p>
+            我们用 Semaphore 把同时处理的连接限制为
+            32；超过时关闭新连接。读写各有 30
+            秒超时。读超时每次读到字节后重置，因此它是“空闲超时”，并不是整个连接的最长寿命。示例停止时取消现有连接，适合无持久化的回显实验，不是博客写入停机策略。
+          </p>
+          <details>
+            <summary>展开完整可运行源码 · tcp_echo.rs</summary>
+            <div class="codebox">
+              <div class="codebar">
+                <span>rust</span
+                ><button type="button" class="copy">复制</button>
+              </div>
+              <pre><code>//! Byte-stream echo server, not an HTTP server.
+//! Run: cargo run --example tcp_echo
+//! Connect with: cargo run --example tcp_frames -- client 127.0.0.1:4000
+use std::{io, sync::Arc, time::Duration};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, TcpStream},
+    sync::Semaphore,
+    task::JoinSet,
+    time::timeout,
+};
+
+async fn echo(mut stream: TcpStream) -&gt; io::Result&lt;()&gt; {
+    let mut buffer = [0_u8; 4096];
+    loop {
+        // Idle read deadline: it resets after each successful read.
+        let n = timeout(Duration::from_secs(30), stream.read(&amp;mut buffer))
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, &quot;idle connection&quot;))??;
+        if n == 0 {
+            return Ok(());
+        }
+        timeout(Duration::from_secs(30), stream.write_all(&amp;buffer[..n]))
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, &quot;slow reader&quot;))??;
+    }
+}
+
+#[tokio::main]
+async fn main() -&gt; io::Result&lt;()&gt; {
+    let listener = TcpListener::bind(&quot;127.0.0.1:4000&quot;).await?;
+    let permits = Arc::new(Semaphore::new(32));
+    let mut tasks = JoinSet::new();
+    println!(&quot;Byte echo listening on 127.0.0.1:4000; Ctrl+C stops the demo.&quot;);
+    loop {
+        tokio::select! {
+            signal = tokio::signal::ctrl_c() =&gt; {
+                signal?;
+                break;
+            }
+            result = tasks.join_next(), if !tasks.is_empty() =&gt; {
+                if let Some(Err(error)) = result {
+                    eprintln!(&quot;Task failed: {error}&quot;);
+                }
+            }
+            accepted = listener.accept() =&gt; {
+                let (socket, peer) = accepted?;
+                let Ok(permit) = permits.clone().try_acquire_owned() else {
+                    // Demo overload policy: close the new connection immediately.
+                    drop(socket);
+                    continue;
+                };
+                tasks.spawn(async move {
+                    let _permit = permit;
+                    if let Err(error) = echo(socket).await {
+                        eprintln!(&quot;{peer}: {error}&quot;);
+                    }
+                });
+            }
+        }
+    }
+    // This demo has no persistent writes; intentionally abort in-flight echoes.
+    // A data-writing service needs a drain/commit policy instead.
+    tasks.abort_all();
+    while tasks.join_next().await.is_some() {}
+    Ok(())
+}</code></pre>
+            </div>
+          </details>
+        </section>
+        <section id="frames">
+          <h2>07 · TCP 没有消息边界：把“粘包”还原成字节流</h2>
+          <p>
+            你连续发送 <code>HELLO</code> 与 <code>WORLD</code>，接收方可能读到
+            <code>HEL</code>，下一次读到 <code>LOWOR</code>，最后读到
+            <code>LD</code>；也可能一次读到全部。应用的 write/read 调用边界，与
+            TCP 报文段、网卡分段及操作系统缓冲处理不是同一个概念。
+          </p>
+          <p>
+            所谓“粘包”和“半包”，通常是程序错误地把一次 read
+            当成一条完整消息。解决问题靠应用层分帧：固定长度、分隔符、长度前缀，或使用已经定义好边界规则的协议。HTTP
+            已有成熟解析器，不要在博客里自己随意拆字符串替代它。
+          </p>
+          <h3>本练习的协议</h3>
+          <p>
+            格式为
+            <strong>4 字节大端无符号长度 + payload 原始字节</strong>。例如 RUST
+            的帧是 <code>00 00 00 04 52 55 53 54</code>。长度按字节计算；中文
+            UTF-8 字符常占多个字节，不能拿字符个数当网络长度。
+          </p>
+          <div class="sim" id="frame-demo">
+            <h4>分帧演示：一次读取不等于一条消息</h4>
+            <p>
+              预设两帧 RUST、HI，模拟它们以三次不规则读取到达。这里模拟应用 read
+              的结果，不模拟真实 TCP 报文。
+            </p>
+            <div class="controls">
+              <button id="frame-next" type="button">接收下一段</button
+              ><button id="frame-reset" type="button">重置</button>
+            </div>
+            <p id="frame-step" aria-live="polite">尚未接收字节</p>
+            <pre id="frame-buffer">待解析缓冲区：空</pre>
+            <p id="frame-messages">已完成消息：无</p>
+          </div>
+          <p>
+            read_exact
+            会持续读取直到指定缓冲区填满，或者返回错误。先拿到长度，再检查最大值，最后分配正文缓冲区。这一顺序很重要：攻击者发来极大长度时，不能先申请内存再校验。
+          </p>
+          <p>
+            示例最大正文 64 KiB，允许空消息，连接可以连续传多帧。新帧开始前干净
+            EOF 返回 None；头部或正文读一半就结束则返回
+            UnexpectedEof。每个完整帧有 30
+            秒期限；超时后直接关闭连接，因为被取消的 read_exact
+            可能已消费部分字节，不能假装下一字节仍是新帧开头。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>终端</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code># 终端一
+cargo run --example tcp_frames
+# 终端二
+cargo run --example tcp_frames -- client
+# 自动测试
+cargo test --example tcp_frames</code></pre>
+          </div>
+          <details>
+            <summary>展开完整可运行源码 · tcp_frames.rs</summary>
+            <div class="codebox">
+              <div class="codebar">
+                <span>rust</span
+                ><button type="button" class="copy">复制</button>
+              </div>
+              <pre><code>//! A tiny framed protocol: [4-byte big-endian length][payload].
+//! Server: cargo run --example tcp_frames
+//! Client: cargo run --example tcp_frames -- client
+//! Tests:  cargo test --example tcp_frames
+use std::{io, sync::Arc, time::Duration};
+use tokio::{
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
+    net::{TcpListener, TcpStream},
+    sync::Semaphore,
+    task::JoinSet,
+    time::timeout,
+};
+
+const MAX_FRAME: usize = 64 * 1024;
+
+async fn read_frame&lt;R: AsyncRead + Unpin&gt;(reader: &amp;mut R) -&gt; io::Result&lt;Option&lt;Vec&lt;u8&gt;&gt;&gt; {
+    let mut header = [0; 4];
+    // Clean EOF before a new header is different from a truncated frame.
+    if reader.read(&amp;mut header[..1]).await? == 0 {
+        return Ok(None);
+    }
+    reader.read_exact(&amp;mut header[1..]).await?;
+    let length = u32::from_be_bytes(header) as usize;
+    if length &gt; MAX_FRAME {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            &quot;frame exceeds 64 KiB&quot;,
+        ));
+    }
+    let mut payload = vec![0; length];
+    reader.read_exact(&amp;mut payload).await?;
+    Ok(Some(payload))
+}
+
+async fn write_frame&lt;W: AsyncWrite + Unpin&gt;(writer: &amp;mut W, payload: &amp;[u8]) -&gt; io::Result&lt;()&gt; {
+    if payload.len() &gt; MAX_FRAME {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            &quot;frame exceeds 64 KiB&quot;,
+        ));
+    }
+    writer
+        .write_all(&amp;(payload.len() as u32).to_be_bytes())
+        .await?;
+    writer.write_all(payload).await
+}
+
+async fn connection(mut socket: TcpStream) -&gt; io::Result&lt;()&gt; {
+    loop {
+        // A deadline for the whole frame, including its body.
+        // On timeout we DROP the connection: read_exact may have consumed bytes.
+        let frame = timeout(Duration::from_secs(30), read_frame(&amp;mut socket))
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, &quot;frame timeout&quot;))??;
+        let Some(payload) = frame else {
+            return Ok(());
+        };
+        timeout(Duration::from_secs(30), write_frame(&amp;mut socket, &amp;payload))
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, &quot;write timeout&quot;))??;
+    }
+}
+
+async fn serve() -&gt; io::Result&lt;()&gt; {
+    let listener = TcpListener::bind(&quot;127.0.0.1:4001&quot;).await?;
+    let permits = Arc::new(Semaphore::new(32));
+    let mut tasks = JoinSet::new();
+    println!(&quot;Framed echo on 127.0.0.1:4001; Ctrl+C stops the demo.&quot;);
+    loop {
+        tokio::select! {
+            signal = tokio::signal::ctrl_c() =&gt; {
+                signal?;
+                break;
+            }
+            result = tasks.join_next(), if !tasks.is_empty() =&gt; {
+                if let Some(Err(error)) = result {
+                    eprintln!(&quot;Task failed: {error}&quot;);
+                }
+            }
+            accepted = listener.accept() =&gt; {
+                let (socket, peer) = accepted?;
+                let Ok(permit) = permits.clone().try_acquire_owned() else {
+                    drop(socket);
+                    continue;
+                };
+                tasks.spawn(async move {
+                    let _permit = permit;
+                    if let Err(error) = connection(socket).await {
+                        eprintln!(&quot;{peer}: {error}&quot;);
+                    }
+                });
+            }
+        }
+    }
+    tasks.abort_all();
+    while tasks.join_next().await.is_some() {}
+    Ok(())
+}
+
+async fn client(address: &amp;str) -&gt; io::Result&lt;()&gt; {
+    let mut stream = TcpStream::connect(address).await?;
+    for text in [&quot;你好，Rust async&quot;, &quot;同一条 TCP 连接上的第二条消息&quot;] {
+        write_frame(&amp;mut stream, text.as_bytes()).await?;
+        let reply = read_frame(&amp;mut stream)
+            .await?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::UnexpectedEof, &quot;missing reply&quot;))?;
+        assert_eq!(reply, text.as_bytes());
+        println!(&quot;Echo: {}&quot;, String::from_utf8_lossy(&amp;reply));
+    }
+    stream.shutdown().await?;
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -&gt; io::Result&lt;()&gt; {
+    let args: Vec&lt;_&gt; = std::env::args().collect();
+    if args.get(1).is_some_and(|arg| arg == &quot;client&quot;) {
+        timeout(
+            Duration::from_secs(5),
+            client(args.get(2).map(String::as_str).unwrap_or(&quot;127.0.0.1:4001&quot;)),
+        )
+        .await
+        .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, &quot;client deadline&quot;))?
+    } else {
+        serve().await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::duplex;
+
+    #[tokio::test]
+    async fn fragmented_header_and_utf8_payload() {
+        // Capacity 1 forces the writer and reader to advance in small pieces.
+        let (mut reader, mut writer) = duplex(1);
+        let text = &quot;我是 Rust 初学者&quot;.as_bytes().to_vec();
+        let expected = text.clone();
+        let sender = tokio::spawn(async move {
+            let packet = [(text.len() as u32).to_be_bytes().to_vec(), text].concat();
+            for byte in packet {
+                writer.write_all(&amp;[byte]).await.unwrap();
+            }
+        });
+        assert_eq!(read_frame(&amp;mut reader).await.unwrap(), Some(expected));
+        assert_eq!(read_frame(&amp;mut reader).await.unwrap(), None);
+        sender.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn consecutive_frames_and_empty_payload() {
+        let (mut reader, mut writer) = duplex(128);
+        write_frame(&amp;mut writer, b&quot;first&quot;).await.unwrap();
+        write_frame(&amp;mut writer, b&quot;&quot;).await.unwrap();
+        write_frame(&amp;mut writer, b&quot;third&quot;).await.unwrap();
+        drop(writer);
+        assert_eq!(
+            read_frame(&amp;mut reader).await.unwrap(),
+            Some(b&quot;first&quot;.to_vec())
+        );
+        assert_eq!(read_frame(&amp;mut reader).await.unwrap(), Some(vec![]));
+        assert_eq!(
+            read_frame(&amp;mut reader).await.unwrap(),
+            Some(b&quot;third&quot;.to_vec())
+        );
+        assert_eq!(read_frame(&amp;mut reader).await.unwrap(), None);
+    }
+
+    #[tokio::test]
+    async fn oversized_and_truncated_frames_are_errors() {
+        let (mut reader, mut writer) = duplex(32);
+        writer
+            .write_all(&amp;((MAX_FRAME + 1) as u32).to_be_bytes())
+            .await
+            .unwrap();
+        assert_eq!(
+            read_frame(&amp;mut reader).await.unwrap_err().kind(),
+            io::ErrorKind::InvalidData
+        );
+        let (mut reader, mut writer) = duplex(32);
+        writer.write_all(&amp;[0, 0, 0, 5, b&#x27;x&#x27;]).await.unwrap();
+        drop(writer);
+        assert_eq!(
+            read_frame(&amp;mut reader).await.unwrap_err().kind(),
+            io::ErrorKind::UnexpectedEof
+        );
+    }
+
+    #[tokio::test]
+    async fn real_tcp_round_trip() {
+        let listener = TcpListener::bind(&quot;127.0.0.1:0&quot;).await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (socket, _) = listener.accept().await.unwrap();
+            connection(socket).await.unwrap();
+        });
+        timeout(Duration::from_secs(5), client(&amp;address.to_string()))
+            .await
+            .unwrap()
+            .unwrap();
+        timeout(Duration::from_secs(5), server)
+            .await
+            .unwrap()
+            .unwrap();
+    }
+}</code></pre>
+            </div>
+          </details>
+          <p class="reference">
+            进一步阅读：<a href="https://tokio.rs/tokio/tutorial/framing"
+              >Tokio：Framing</a
+            >。
+          </p>
+        </section>
+        <section id="axum">
+          <h2>08 · 回到博客：Axum 如何把 HTTP 变成函数参数</h2>
+          <p>
+            Axum 接在 HTTP 解析层之后，负责根据方法和路径选择
+            handler、提取参数、执行中间件，并把返回值转换为 HTTP 响应。底层 HTTP
+            实现来自 Hyper 生态，异步网络由 Tokio 支持；业务代码没有手动
+            accept，是框架替你组织了这部分工作，不代表没有 TCP。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/posts.rs">src/posts.rs:11</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>pub fn public_routes() -&gt; Router&lt;SharedState&gt; {
+    Router::new()
+        .route(&quot;/posts&quot;, get(list_posts))
+        .route(&quot;/posts/{id}&quot;, get(get_post))
+}
+pub fn protected_routes() -&gt; Router&lt;SharedState&gt; {
+    Router::new()
+        .route(&quot;/posts&quot;, post(create_post))
+        .route(&quot;/posts/{id}&quot;, put(update_post).delete(delete_post))
+}</code></pre>
+          </div>
+          <p>
+            这里的路径在 main 中再通过
+            <code>.nest("/api", api)</code> 添加前缀，所以最终地址是
+            <code>/api/posts</code>。相同路径的 GET 和 POST
+            是不同操作，保护写路由不等于保护公开读路由。<code
+              >Router&lt;SharedState&gt;</code
+            >
+            在 Axum 中表示仍需要提供这种状态的路由；main 的 with_state
+            把值装进去，不是每次请求创建一份 AppState。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/posts.rs">src/posts.rs:46</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>async fn get_post(
+    State(state): State&lt;SharedState&gt;,
+    Path(id): Path&lt;String&gt;,
+) -&gt; Result&lt;Json&lt;Post&gt;, AppError&gt; {
+    let posts = state.posts.read().await;
+    posts
+        .iter()
+        .find(|post| post.id == id)
+        .cloned()
+        .map(Json)
+        .ok_or(AppError::NotFound)
+}</code></pre>
+          </div>
+          <p>
+            <code>State(state): State&lt;SharedState&gt;</code>
+            既是类型声明，也是对 State 包装值的解构；<code>Path(id)</code>
+            从匹配的路径提取 id。<code>Json(input)</code>
+            则会消费请求正文并反序列化。读取整个正文的 extractor
+            通常放在参数列表最后，正文流不能随便让多个提取器重复消费。
+          </p>
+          <p>
+            <code>Result&lt;Json&lt;Post&gt;, AppError&gt;</code>
+            的成功分支会序列化为 JSON；错误分支经 AppError 的 IntoResponse
+            得到状态码和错误消息。找不到文章是 404，输入不符合约束是
+            400；网络已经建立成功，业务仍然可以失败。
+          </p>
+          <h3>中间件的进入与返回</h3>
+          <p class="source">
+            项目源码 · <a href="../../src/auth.rs">src/auth.rs:24</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>pub async fn guard(
+    State(state): State&lt;SharedState&gt;,
+    request: Request,
+    next: Next,
+) -&gt; Result&lt;Response, AppError&gt; {
+    require_login(&amp;state, request.headers()).await?;
+    Ok(next.run(request).await)
+}</code></pre>
+          </div>
+          <p>
+            guard 先检查 Authorization，再执行
+            next。它被放在受保护路由外层，因此未经授权的上传，在业务的
+            Bytes/Json 提取前就会返回
+            401；这不意味着客户端没有发送任何字节，也不保证反向代理没有预先缓冲请求体。
+          </p>
+          <p>
+            另一个 security_headers 中间件先
+            <code>next.run(request).await</code
+            >，后修改响应头，所以它在返回路径上工作。排查中间件顺序时，要分别画“请求往里走”和“响应往外走”，不能只看名字。
+          </p>
+          <p class="reference">
+            进一步阅读：<a href="https://docs.rs/axum/latest/axum/"
+              >Axum 文档与 extractor 示例</a
+            >。
+          </p>
+        </section>
+        <section id="state">
+          <h2>09 · Arc、Mutex、RwLock：共享不等于随便修改</h2>
+          <p>
+            HTTP 请求可以重叠执行。如果每个请求都创建自己的
+            Vec，保存后别人看不到；如果多个请求直接修改同一份
+            Vec，就必须协调访问。项目把全部应用状态放在一个 Arc
+            内，再分别给不同集合加锁。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/main.rs">src/main.rs:24</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>type SharedState = Arc&lt;AppState&gt;;
+struct AppState {
+    posts: RwLock&lt;Vec&lt;posts::Post&gt;&gt;,
+    works: RwLock&lt;Vec&lt;works::Work&gt;&gt;,
+    sessions: RwLock&lt;Vec&lt;(String, Instant)&gt;&gt;,
+    login_attempts: Mutex&lt;Vec&lt;Instant&gt;&gt;,
+    data_file: PathBuf,
+    works_file: PathBuf,
+    uploads_dir: PathBuf,
+    admin_username: String,
+    admin_password: String,
+}</code></pre>
+          </div>
+          <h3>Arc 管所有权，锁管访问规则</h3>
+          <p>
+            <code>Arc::clone(&amp;state)</code> 增加引用计数，得到指向同一
+            AppState 的另一个拥有者，不会复制全部文章。最后一个 Arc
+            释放时才销毁共享对象。Arc
+            本身不允许任意可变访问，也不能自动把一个不安全的内部类型变安全。
+          </p>
+          <p>
+            <code>RwLock</code> 允许多个读守卫并存，写守卫独占；<code
+              >Mutex</code
+            >
+            每次只允许一个守卫。不该用“读多写少就一定更快”代替测量，调度、持锁时间和数据复制成本都可能成为瓶颈。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/posts.rs">src/posts.rs:42</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>async fn list_posts(State(state): State&lt;SharedState&gt;) -&gt; Json&lt;Vec&lt;Post&gt;&gt; {
+    Json(state.posts.read().await.clone())
+}</code></pre>
+          </div>
+          <p>
+            这里 read().await 等待取得读锁，然后 clone 的是
+            <strong>Vec 和其中的文章数据</strong>，与 Arc 的浅克隆不同。返回独立
+            Vec 后不再需要把锁跨越 JSON
+            序列化和网络发送；好处是缩短读锁范围，代价是文章多时复制昂贵。
+          </p>
+          <h3>为什么不是所有地方都必须 Tokio Mutex</h3>
+          <p>
+            对于很短的同步临界区、不跨 await、争用很小的代码，标准库 Mutex
+            也可以合理使用。若等锁时阻塞系统线程，或者持同步守卫跨
+            await，就容易拖住运行时甚至死锁。异步锁让“等待拿锁”可以让出任务，但已经拿到锁后，其余请求仍要遵守访问限制。
+          </p>
+          <p>
+            本项目 login_attempts 用 Tokio
+            Mutex，只做保留时间窗口和插入时间戳后就
+            <code>drop(attempts)</code>，因此不会把这个锁带到后续 sessions
+            写锁中。drop
+            是主动缩短临界区；更通用的写法是用一个小作用域让守卫自然释放。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>{
+    let mut attempts = state.login_attempts.lock().await;
+    // 只处理这个集合
+} // guard 离开作用域，自动解锁
+// 这里再访问其他状态</code></pre>
+          </div>
+          <p class="reference">
+            进一步阅读：<a href="https://tokio.rs/tokio/tutorial/shared-state"
+              >Tokio：Shared state</a
+            >。
+          </p>
+        </section>
+        <section id="storage">
+          <h2>10 · 保存文章：为什么持着写锁去 await 文件 I/O</h2>
+          <p>
+            “锁尽量短”是一条优化方向，但不能为了短就破坏正确性。当前实现特意把写锁覆盖整个“读取旧集合
+            → 生成新集合 → 写磁盘 → 发布到内存”的过程。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/posts.rs">src/posts.rs:73</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let mut posts = state.posts.write().await;
+    let mut updated = posts.clone();
+    updated.push(post.clone());
+    storage::save(&amp;state.data_file, &amp;updated).await?;
+    *posts = updated;
+    Ok((StatusCode::CREATED, Json(post)))
+}</code></pre>
+          </div>
+          <p>
+            第一行保证本进程中同时只有一个文章修改者。updated
+            是旧集合的副本，修改暂不影响读者能看到的数据。storage::save
+            成功后才把 updated
+            放回共享状态；文件保存返回错误时，问号提前返回，旧内存集合不变。
+          </p>
+          <h3>过早放锁为什么会丢更新</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时刻</th>
+                  <th>请求 A</th>
+                  <th>请求 B</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>从 [旧文章] 克隆副本并放锁</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td></td>
+                  <td>也从 [旧文章] 克隆副本并放锁</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>写入 [旧文章, A]</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td></td>
+                  <td>写入 [旧文章, B]，覆盖 A</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            数据竞争在 Rust
+            的内存安全意义上可能已经避免，业务上的“丢更新”却仍然发生。当前写锁可以避免这个时序，但代价是文章的读请求和其他写请求会在保存期间等待。作品使用另外一把锁，因此不被同一文章锁直接阻塞。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/storage.rs">src/storage.rs:16</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>pub async fn save&lt;T: Serialize&gt;(path: &amp;Path, values: &amp;[T]) -&gt; Result&lt;(), AppError&gt; {
+    let bytes = serde_json::to_vec_pretty(values).map_err(AppError::storage)?;
+    let temporary = path.with_extension(&quot;json.tmp&quot;);
+    let result = async {
+        let mut file = fs::File::create(&amp;temporary).await?;
+        file.write_all(&amp;bytes).await?;
+        file.sync_all().await?;
+        drop(file);
+        fs::rename(&amp;temporary, path).await
+    }
+    .await;
+    if result.is_err() {
+        let _ = fs::remove_file(&amp;temporary).await;
+    }
+    result.map_err(AppError::storage)
+}</code></pre>
+          </div>
+          <h3>临时文件、刷盘、重命名，各有不同作用</h3>
+          <p>
+            serde_json::to_vec_pretty 是同步 CPU 工作，即使放在 async
+            函数里也不会自动异步化。随后创建同目录临时文件、写完整内容、sync_all，再
+            rename
+            到目标路径。关闭文件句柄后再重命名，也减少跨平台文件占用问题。
+          </p>
+          <p>
+            同文件系统上的替换可避免正常读者看到“半个
+            JSON”，但它不是完整数据库事务。sync_all
+            用于要求操作系统同步文件数据及相关元信息；严格断电恢复还涉及目录项持久化及文件系统语义，当前代码没有同步父目录。已有的失败回滚测试主要验证普通
+            I/O 错误，不等于验证断电或所有取消时序。
+          </p>
+          <aside class="note">
+            当前方案仅支持一个进程管理同一数据目录：临时文件名固定，RwLock
+            也只在一个进程内生效。不要启动两个副本共用这两个
+            JSON。外部手动修改文件也不会自动刷新内存，需要明确的重新加载流程。
+          </aside>
+          <p>
+            还要区分“普通 Err”和“Future 被取消”：当前 save 的错误清理并不会在
+            Future 被直接丢弃时自动执行。Tokio
+            文件操作底层可能仍在阻塞线程池执行，取消时可能出现磁盘已更新但内存尚未更新，甚至后续写入复用临时文件的风险。若以后给写接口加
+            timeout 或主动 abort，必须先重设计提交边界；不能仅把 save 包进
+            timeout 就宣布安全。
+          </p>
+          <p class="reference">
+            进一步阅读：<a
+              href="https://docs.rs/tokio/latest/tokio/fs/index.html"
+              >Tokio 文件 I/O 的线程池实现说明</a
+            >。
+          </p>
+        </section>
+        <section id="errors">
+          <h2>11 · Result、错误转换与 HTTP 失败语义</h2>
+          <p>
+            系统里至少有四种失败：输入不合法、认证失败、业务对象不存在、基础设施故障。它们不应全部变成
+            panic，也不应全部返回 200。当前 AppError
+            用枚举区分业务错误，IntoResponse 决定如何告诉浏览器。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/error.rs">src/error.rs:8</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>#[derive(Debug)]
+pub enum AppError {
+    BadRequest(String),
+    Unauthorized,
+    NotFound,
+    TooManyRequests,
+    Internal,
+}
+impl AppError {
+    pub fn storage(error: impl std::fmt::Display) -&gt; Self {
+        eprintln!(&quot;Storage error: {error}&quot;);
+        Self::Internal
+    }
+}</code></pre>
+          </div>
+          <p>
+            例如
+            <code>fs::write(...).await.map_err(AppError::storage)?</code
+            >：先等待 I/O，失败时记录底层错误并转换成
+            AppError，再用问号把它返回。storage 函数中的
+            <code>impl Display</code>
+            允许不同的可展示错误进入同一转换入口，不要求把服务器的完整路径和底层信息都发给用户。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>状态码</th>
+                  <th>本项目含义</th>
+                  <th>客户端应该怎样理解</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>200 / 201 / 204</td>
+                  <td>读取成功 / 创建成功 / 无正文成功</td>
+                  <td>204 不能无条件 response.json()</td>
+                </tr>
+                <tr>
+                  <td>400</td>
+                  <td>业务输入校验不通过</td>
+                  <td>修正表单内容</td>
+                </tr>
+                <tr>
+                  <td>401</td>
+                  <td>缺少或失效的登录凭据</td>
+                  <td>重新登录，不要无限重试</td>
+                </tr>
+                <tr>
+                  <td>404</td>
+                  <td>不存在的对象或 API 路径</td>
+                  <td>检查 id 或链接</td>
+                </tr>
+                <tr>
+                  <td>413</td>
+                  <td>请求体超出限制</td>
+                  <td>缩小上传文件或内容</td>
+                </tr>
+                <tr>
+                  <td>429</td>
+                  <td>一分钟登录尝试过多</td>
+                  <td>按 Retry-After 等待</td>
+                </tr>
+                <tr>
+                  <td>500</td>
+                  <td>存储等内部错误</td>
+                  <td>查看服务端日志，保留用户编辑内容</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Axum 对 JSON 格式、Content-Type
+            等提取失败也有自己的拒绝响应，不一定使用你的 AppError JSON
+            结构。因此前端 common.js 先检查 HTTP
+            状态，再尝试解析响应体。网络断开则可能连 HTTP 状态码都没有：fetch
+            抛出错误，并不等于服务端完全没做事。
+          </p>
+          <h3>为什么请求超时后重试可能重复创建</h3>
+          <p>
+            服务端已经把文章保存了，但响应没到浏览器，浏览器只看到超时。如果重试
+            POST，当前接口会生成另一个 UUID，可能出现两篇文章。UUID
+            解决标识唯一，不解决重试幂等。未来可增加幂等键并持久化“请求键 →
+            创建结果”，让同一个逻辑操作重试时得到同一结果。
+          </p>
+          <p>
+            调试时区分 panic、JoinError 和业务 Result：如果 spawn 的任务返回
+            Result，那么
+            <code>handle.await</code>
+            先得到任务是否成功结束的结果，内层才是业务是否成功。两层问号处理的是两个不同故障层次。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let handle = tokio::spawn(async {
+    // 返回 io::Result&lt;Vec&lt;u8&gt;&gt;
+    tokio::fs::read(&quot;some-file.txt&quot;).await
+});
+let bytes = handle.await??;
+// 外层 ?：任务 panic / 被取消等 JoinError
+// 内层 ?：文件读取的 io::Error</code></pre>
+          </div>
+        </section>
+        <section id="cancellation">
+          <h2>12 · 超时、select! 与取消：停止等待不等于撤销操作</h2>
+          <p>
+            给读接口、外部调用设置期限有助于避免无限等待。但 timeout
+            的含义是：在未来某次运行时检查到超时后，不再继续等待被包装的
+            Future。它不是操作系统级的强制抢占，也不等于远端事务已经回滚。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let result = tokio::time::timeout(
+    std::time::Duration::from_secs(3),
+    some_async_operation(),
+).await;
+// Ok(inner)：Future 在期限内完成
+// Err(elapsed)：等待到期；需要单独分析已发生的副作用</code></pre>
+          </div>
+          <p>
+            如果 some_async_operation 长时间执行同步计算、不让出控制权，timeout
+            不能立即打断这段计算。若异步操作向外部系统发出了请求，即使本地
+            Future
+            被丢弃，外部系统仍可能完成工作。应该分别考虑“等待期限”“执行期限”“提交是否完成”和“是否可重试”。
+          </p>
+          <h3>取消安全不是所有 async 函数共有的属性</h3>
+          <p>
+            在 select! 中反复取消再重建某个读取
+            Future，必须知道它是否已经消费了输入。read_exact
+            被取消时可能已经读走一部分字节；如果你丢失这份进度，再把后续字节当新消息头解析，协议就错位了。分帧示例选择超时就关闭整条连接，避免在未知中间状态继续读取。
+          </p>
+          <p>
+            需要继续复用连接时，可以把缓冲区和解析进度保存在连接对象中，让取消“等待”不丢失协议状态。对保存文章，则需要更明确的写入工作单元：提交过程一旦进入关键阶段，由受管理的写任务完成并报告结果，而不是任意丢弃它。
+          </p>
+          <aside class="note">
+            不要为了“让 HTTP 快点返回”，就把保存操作随手 tokio::spawn 后立即返回
+            201。这样 201
+            可能发出时文件还没有保存，失败也无处反馈；服务退出时任务还可能丢失。先定义成功语义，再选择任务结构。
+          </aside>
+          <p class="reference">
+            进一步阅读：<a
+              href="https://docs.rs/tokio/latest/tokio/time/fn.timeout.html"
+              >Tokio timeout 的执行边界</a
+            >。
+          </p>
+          <p class="reference">
+            进一步阅读：<a
+              href="https://docs.rs/tokio/latest/tokio/macro.select.html"
+              >Tokio select! 的取消安全说明</a
+            >。
+          </p>
+        </section>
+        <section id="backpressure">
+          <h2>13 · 上传、背压与阻塞工作</h2>
+          <p>
+            异步可以降低大量等待任务占用线程的成本，但不会消除内存、磁盘、CPU
+            和文件描述符的上限。一个连接读入 20 MiB 图片，100
+            个同类上传仅正文缓冲就可能接近 2
+            GiB，另有代理缓冲、序列化和其他开销。
+          </p>
+          <h3>当前上传实现做了什么</h3>
+          <p>
+            works.rs 为上传路由设置了 20 MiB 的 DefaultBodyLimit，guard
+            先检查登录；Bytes 提取器把请求正文聚合到内存，handler 检查
+            PNG/JPEG/WebP 文件头，生成 UUID 文件名，再写到
+            uploads。它没有逐块转存，也没有完整解码图片或自动压缩。
+          </p>
+          <p>
+            所以“单个上传有限制”不等于“总上传内存已受限”。进一步改进可以在正文聚合之前放置并发限制，让超出的请求等待或返回明确错误；若在拿到
+            Bytes 后才申请许可，内存占用已经发生了。
+          </p>
+          <h3>背压是把承受能力传回上游</h3>
+          <p>
+            Semaphore 控制同时进行的工作数量；有界 mpsc channel
+            控制排队数量，队列满时 send().await
+            等待。两者管的不是同一件事。无界队列可能把短时间过载变成持续增长的内存；只限制“在执行的任务”，但无限积攒“等待执行的任务”，同样不完整。
+          </p>
+          <p>
+            TCP 自己也会施加背压：对端读得慢时，发送缓冲逐渐填满，write_all
+            可能等待。但这只能缓解该连接的发送，不能限制你业务层提前生成的大量响应和任务。
+          </p>
+          <h3>同步 CPU 与异步 I/O 混用</h3>
+          <p>
+            serde_json 编解码、图片缩放、压缩和哈希计算都可能是同步 CPU
+            工作。小对象内联处理通常简单合理；大对象持续占用工作线程，就会让无关请求延迟升高。先测量，再考虑把重活交给
+            spawn_blocking、独立工作线程或专门的 CPU 线程池。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let output = tokio::task::spawn_blocking(move || {
+    expensive_synchronous_operation(input)
+}).await?;</code></pre>
+          </div>
+          <p>
+            spawn_blocking
+            使用单独的阻塞工作线程，不是把同步函数改造成可在任意点暂停的
+            Future。已经开始的闭包一般不能靠 abort 停止；CPU
+            密集任务还应该限制并发，避免制造过多竞争线程。Tokio 的普通文件 API
+            本身也会利用阻塞工作线程，因此“async 文件读取”不等于磁盘硬件原生按
+            Future 工作。
+          </p>
+          <p class="reference">
+            进一步阅读：<a
+              href="https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html"
+              >Tokio spawn_blocking 文档</a
+            >。
+          </p>
+        </section>
+        <section id="ownership">
+          <h2>14 · async move、Send、Sync 和 &#x27;static</h2>
+          <p>
+            普通函数局部借用通常能顺着调用栈理解。异步任务可能在当前函数返回后仍继续执行，因此编译器要检查：任务拿着的数据是否还活着？能否被调度到别的工作线程？
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>let message = String::from(&quot;hello&quot;);
+let handle = tokio::spawn(async move {
+    println!(&quot;{message}&quot;);
+});
+handle.await?;</code></pre>
+          </div>
+          <p>
+            async move 把捕获的值移入 Future，让任务自己拥有
+            message。它不意味着复制，也不意味着创建线程，更不会把一个引用自动变成拥有的数据。如果传进去的是
+            &amp;String，那移动进去的仍然只是引用；必要时先克隆 String 或 Arc。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>术语</th>
+                  <th>应该怎样理解</th>
+                  <th>不应该怎样理解</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Send</td>
+                  <td>值可以安全地跨线程转移所有权</td>
+                  <td>这个类型自动并行执行</td>
+                </tr>
+                <tr>
+                  <td>Sync</td>
+                  <td>共享引用 &amp;T 可以安全地跨线程使用</td>
+                  <td>所有方法都自动加锁</td>
+                </tr>
+                <tr>
+                  <td>&#x27;static 约束</td>
+                  <td>不包含比任务需求更短的外部借用</td>
+                  <td>这个值必须永远占着内存</td>
+                </tr>
+                <tr>
+                  <td>async move</td>
+                  <td>把捕获值的所有权移入 Future</td>
+                  <td>把一切都变成深拷贝</td>
+                </tr>
+                <tr>
+                  <td>Arc&lt;T&gt;</td>
+                  <td>多个拥有者引用同一个 T</td>
+                  <td>内部任何 T 都自动线程安全</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Tokio spawn 通常要求 Future 是 Send +
+            'static。这使运行时能够在工作线程间调度任务；并不表示每次 await
+            后一定换线程。'static 约束也不妨碍任务完成时释放自己拥有的
+            String。真正的静态引用 &amp;'static str 与泛型 T: 'static
+            是两个需要区分的写法。
+          </p>
+          <h3>看到“future cannot be sent between threads safely”怎么办</h3>
+          <p>
+            从错误指出的 await 往前看：有哪些值活过了这个等待点？常见的是
+            Rc、某些锁守卫、线程绑定对象，或借用了短生命周期局部变量。先缩小作用域，确认值在
+            await 前已释放；若需要跨任务共享，再考虑 Arc
+            与合适的同步结构。不要为消除报错而盲目增加 unsafe。
+          </p>
+          <p>
+            本项目
+            <code>State&lt;Arc&lt;AppState&gt;&gt;</code>
+            避免把请求借用到一个即将结束的栈帧里；data_file 是拥有的
+            PathBuf，输入正文是拥有的 String/Vec，适合让请求 Future
+            在等待磁盘期间保存自己的状态。
+          </p>
+        </section>
+        <section id="shutdown">
+          <h2>15 · 部署与优雅停止：异步程序也有生命周期</h2>
+          <p>
+            一个长期运行的服务器不仅要能启动，还要知道什么时候停止接受工作、怎样等待已接受的工作、何时必须结束。main
+            中把 shutdown_signal 交给
+            with_graceful_shutdown，就是把“接到停止信号”接入服务生命周期。
+          </p>
+          <p class="source">
+            项目源码 · <a href="../../src/main.rs">src/main.rs:108</a>
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>rust</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect(&quot;cannot install Ctrl+C handler&quot;);
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect(&quot;cannot install SIGTERM handler&quot;)
+            .recv()
+            .await;
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::&lt;()&gt;();
+    tokio::select! { _ = ctrl_c =&gt; {}, _ = terminate =&gt; {} }
+}</code></pre>
+          </div>
+          <p>
+            Ctrl+C 通常对应中断信号；Linux 上 systemd 停止服务通常发
+            SIGTERM。select! 等待其中一个到来。非 Unix 平台用永不完成的 pending
+            Future 占住另一个分支，让代码保留同样结构。
+          </p>
+          <p>
+            服务收到退出通知后可以停止接受新工作并等待已有连接或请求结束；实际等待时间还受慢连接、长请求、HTTP
+            行为和外部进程管理器的期限影响。当前程序没有给每个写入设计独立的强制取消策略，示例
+            systemd 文件则设置了 30 秒停止期限，到期后的强制终止不能靠 Rust
+            析构器保证完成保存。
+          </p>
+          <h3>本地地址、代理和健康检查</h3>
+          <p>
+            原生运行时让 Rust 监听回环地址，代理对外提供
+            HTTPS。若改成容器，容器内通常需要监听
+            0.0.0.0，主机端口映射仍可只绑定 127.0.0.1。把容器内部 0.0.0.0
+            和主机对公网开放混为一谈，会导致“服务正常启动但代理连不上”等问题。
+          </p>
+          <p>
+            <code>/api/health</code>
+            当前只返回进程可响应的状态，不检查磁盘剩余空间或未来写入能否成功。健康检查成功说明它能回答这个请求，不代表所有业务依赖都健康。以后可以区分存活检查和就绪检查，但不要在每次健康检查中做昂贵的磁盘操作。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>现象</th>
+                  <th>先检查什么</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Connection refused</td>
+                  <td>进程是否运行、IP/端口是否正确、是否监听了预期接口</td>
+                </tr>
+                <tr>
+                  <td>502 / 503</td>
+                  <td>反向代理到后端的连接与健康状态</td>
+                </tr>
+                <tr>
+                  <td>页面能开，保存失败</td>
+                  <td>后台会话、API 状态码、数据目录权限和磁盘空间</td>
+                </tr>
+                <tr>
+                  <td>重启后文章不见</td>
+                  <td>BLOG_DATA_DIR、工作目录、容器挂载是否一致</td>
+                </tr>
+                <tr>
+                  <td>改了样式仍看不到</td>
+                  <td>HTML 的资源版本号、浏览器及 CDN 缓存</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            项目启动时的静态文件存在检查使用同步
+            is_file，这种启动阶段的一次小检查与请求处理期间反复读取大文件不同。异步工程判断是否需要改造时，要同时看耗时、调用频率和所在阶段。
+          </p>
+        </section>
+        <section id="testing">
+          <h2>16 · 用实验验证，而不是只看 println</h2>
+          <h3>先建立不会污染线上数据的学习环境</h3>
+          <p>
+            TCP 示例无需密码，也不访问
+            data。若要改博客接口，使用独立端口和独立数据目录；不要对正在使用的线上文章做并发删除实验。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>PowerShell</span
+              ><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code># 在仓库根目录，PowerShell
+$env:BLOG_BIND = &quot;127.0.0.1:3010&quot;
+$env:BLOG_DATA_DIR = &quot;tmp/learning-data&quot;
+$env:BLOG_PUBLIC_DIR = &quot;public&quot;
+$env:BLOG_ADMIN_USERNAME = &quot;admin&quot;
+$credential = Get-Credential -UserName admin -Message &quot;设置学习实例密码&quot;
+$env:BLOG_ADMIN_PASSWORD = $credential.GetNetworkCredential().Password
+cargo run --locked</code></pre>
+          </div>
+          <p>
+            浏览器打开
+            <code>http://127.0.0.1:3010</code
+            >。这些环境变量只影响该终端启动的进程；另开终端不一定继承你刚设置的值。学习目录首次为空，正好观察第一次保存何时创建
+            JSON。
+          </p>
+          <div class="codebox">
+            <div class="codebar">
+              <span>终端</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code>cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+cargo test --locked --example tcp_frames
+cargo build --locked
+node --test tests/frontend.test.mjs
+node tests/api-smoke.mjs</code></pre>
+          </div>
+          <h3>每种测试回答不同问题</h3>
+          <p>
+            Rust 单元测试检查图片 URL 与文件头规则。TCP 示例测试用小容量 duplex
+            模拟分散到达，再通过 127.0.0.1:0 建立真实连接。Node
+            集成测试启动新的博客进程，以临时目录验证 HTTP
+            契约和重启持久化；它不是绕开网络直接调用
+            handler，所以能发现路由和状态码问题。
+          </p>
+          <p>
+            并发创建测试要检查最终记录数量与内容，不能只检查请求都返回
+            201。保存失败测试通过让临时文件路径变成目录触发写入错误，再检查内存没有变。损坏
+            JSON
+            测试检查服务拒绝启动且保留坏文件。这些都比只看控制台“成功”更能支撑结论。
+          </p>
+          <aside class="note">
+            <strong>本次编写时已实测：</strong>TCP 配套示例 4
+            项测试通过；async_basics 顺序等待约 623ms，join 约
+            312ms。这是本机一次演示结果，不是对你的服务器吞吐量的承诺。全部示例通过
+            Clippy 检查。
+          </aside>
+          <h3>初步观察请求耗时</h3>
+          <div class="codebox">
+            <div class="codebar">
+              <span>终端</span><button type="button" class="copy">复制</button>
+            </div>
+            <pre><code># Linux / macOS
+curl -sS -o /dev/null -w &#x27;status=%{http_code} total=%{time_total}\n&#x27; \
+  http://127.0.0.1:3010/api/posts
+
+# Windows PowerShell：显式使用 curl.exe
+curl.exe -sS -o NUL -w &quot;status=%{http_code} total=%{time_total}\n&quot; http://127.0.0.1:3010/api/posts</code></pre>
+          </div>
+          <p>
+            一次 curl
+            只能说明一次请求；要研究容量，还要固定数据规模、并发数、持续时间，记录中位数、P95/P99
+            延迟和错误率，并观察
+            CPU、内存、磁盘。尽量不要一边下载大视频一边把单次接口耗时解释成“锁性能”。
+          </p>
+          <p>
+            日志可逐步改用 tracing，把请求方法、路径、状态、耗时放进同一
+            span。不要记录后台密码、Bearer token
+            或整份上传正文。日志能帮助关联事件，但不应通过大量打印改变本来要测量的行为。
+          </p>
+        </section>
+        <section id="evolution">
+          <h2>17 · 这个工程接下来应该怎样演进</h2>
+          <p>
+            对个人站点，JSON + 单实例 +
+            集合锁足够易懂。值得学习的是认识它的成本：每次写入克隆整个集合并重写整个文件；列表读取复制全部正文；文件
+            I/O 期间文章写锁占用；多进程没有协调；没有持久会话和幂等提交记录。
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>问题</th>
+                  <th>可以尝试的方向</th>
+                  <th>需要重新验证的语义</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>列表返回所有正文</td>
+                  <td>分页与摘要 DTO，只返回列表需要的字段</td>
+                  <td>排序稳定性、页边界、总数是否准确</td>
+                </tr>
+                <tr>
+                  <td>单文件写入时间增长</td>
+                  <td>SQLite 等数据库，使用事务</td>
+                  <td>事务边界、迁移、备份、阻塞驱动的线程使用</td>
+                </tr>
+                <tr>
+                  <td>多个请求争用写入资源</td>
+                  <td>有界 mpsc + 单写任务 + oneshot 结果</td>
+                  <td>入队不等于提交；关机要排空或拒绝新工作</td>
+                </tr>
+                <tr>
+                  <td>上传内存随并发增大</td>
+                  <td>鉴权后、聚合前限并发；进一步考虑流式上传</td>
+                  <td>不完整文件清理、总大小限制、失败重试</td>
+                </tr>
+                <tr>
+                  <td>服务重启注销所有会话</td>
+                  <td>持久会话或其他认证方案</td>
+                  <td>撤销、过期、存储泄露影响</td>
+                </tr>
+                <tr>
+                  <td>请求重试重复创建</td>
+                  <td>幂等键及结果持久化</td>
+                  <td>同一键不同内容怎么办、记录保存多久</td>
+                </tr>
+                <tr>
+                  <td>无法定位慢请求</td>
+                  <td>结构化日志与耗时指标</td>
+                  <td>不记录秘密、统计锁等待和 I/O 时间</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>用“单写任务”理解 actor 模型</h3>
+          <div class="flow">
+            <span>HTTP 请求</span><b>→</b><span>有界 mpsc</span><b>→</b
+            ><span>写任务拥有状态</span><b>→</b><span>提交到存储</span><b>→</b
+            ><span>oneshot 返回结果</span>
+          </div>
+          <p>
+            HTTP
+            层发送命令后，必须等待提交结果才能返回“保存成功”。写任务拥有状态，其他任务不直接修改；这有助于集中序列化写入和取消策略。不过如果写任务自己仍被随意取消，或队列没有关闭/排空设计，问题并没有消失。它是把职责显式化，不是一个自动保证可靠性的魔法工具。
+          </p>
+          <p>
+            不要同时引入数据库、JWT、Redis、消息队列和微服务。每次只解决一个实际问题，并写出“为什么现在的方案不够、换完以后应该保持什么行为”。如果你能清楚解释这一点，工程能力已经比堆很多技术名词更扎实。
+          </p>
+        </section>
+        <section id="practice">
+          <h2>18 · 建议按这六个阶段动手</h2>
+          <ol class="roadmap">
+            <li>
+              <strong>读通请求链。</strong>给 main、guard、list_posts 和
+              storage::save 各写一句自己的解释。验收：不看教程，能说出 GET 与
+              POST 分别在哪些地方 await，在哪些地方做同步计算。
+            </li>
+            <li>
+              <strong>跑异步等待实验。</strong>运行 async_basics，把两个等待改成
+              200ms 和 600ms。预测顺序与 join 的总时长，再运行验证。验收：解释
+              join 不创建线程，spawn 的任务为何不必等 handle.await 才开始。
+            </li>
+            <li>
+              <strong>掌握字节流。</strong>跑 echo 和
+              frames。把测试消息改成中文、空消息与 64 KiB 边界。验收：解释 why
+              read != message；区分字节数、字符数、缓冲区容量和实际 n。
+            </li>
+            <li>
+              <strong>理解并发正确性。</strong
+              >只在学习副本中故意做一次“克隆后放锁再保存”，运行并发创建测试观察结果。调度具有不确定性，一次没复现不代表正确。验收：画出两个请求互相覆盖的时序，再恢复正确实现。
+            </li>
+            <li>
+              <strong>增加一个真实接口功能。</strong
+              >给列表加分页，设置默认值与上限，保证同样条件下排序稳定；别先从增添复杂架构开始。验收：空列表、第一页、最后一页、非法参数都有清楚结果。
+            </li>
+            <li>
+              <strong>改进一个工程边界。</strong
+              >任选“上传聚合前限并发”“单写任务”“持久化迁移”之一。先写失败与停止策略，再实现。验收：正常、过载、磁盘失败、客户端断开和停机都能说明预期行为。
+            </li>
+          </ol>
+          <h3>每天的小复盘</h3>
+          <p>
+            记录三件事：今天新增了哪一个不变量；哪个测试证明它成立；还有哪个失败时序没有覆盖。比如“只有成功替换文件后才更新内存”是一个不变量，“取消文件任务时的磁盘状态”仍是未覆盖边界。把这两者分清，比把所有测试都叫‘稳定可靠’更有价值。
+          </p>
+        </section>
+        <section id="review">
+          <h2>19 · 自测、术语表和下一轮阅读</h2>
+          <details>
+            <summary>1. async 函数调用后，函数体一定马上执行吗？</summary>
+            <p>
+              不是。调用普通 async fn 先产生 Future；由 await、spawn
+              或其他执行器路径推动它。参数表达式仍按普通 Rust
+              规则求值，不要把“函数体惰性执行”误解为整个调用表达式都没有动作。
+            </p>
+          </details>
+          <details>
+            <summary>
+              2. 一个 handler 里的 .await 会让整台服务器暂停吗？
+            </summary>
+            <p>
+              正确实现的异步等待通常只让当前任务等待，运行时可推进别的任务。但同步阻塞、长
+              CPU 计算或过长的共享锁持有时间，会通过不同机制影响其他请求。
+            </p>
+          </details>
+          <details>
+            <summary>3. 为什么使用 Arc 后仍然需要锁？</summary>
+            <p>
+              Arc
+              负责共享所有权。是否能并发读写里面的值，仍由类型规则和锁等机制决定。Arc::clone
+              不复制文章，Vec&lt;Post&gt;::clone 通常会复制文章数据。
+            </p>
+          </details>
+          <details>
+            <summary>4. 写锁跨 await 是不是一定写错？</summary>
+            <p>
+              不一定。异步锁可以跨
+              await，本项目用它把整个保存过程串行化。代价是等待同一锁的请求延迟增加；若要缩短范围，必须同时解决丢更新、提交顺序和取消安全。
+            </p>
+          </details>
+          <details>
+            <summary>5. TCP 保证可靠，为什么我还要给消息加长度？</summary>
+            <p>
+              可靠和有序描述字节传输，不定义你的消息边界。长度前缀属于应用协议，帮助从任意
+              read 切片重建完整消息。
+            </p>
+          </details>
+          <details>
+            <summary>
+              6. 服务端发回 201，但客户端超时了，重试一定安全吗？
+            </summary>
+            <p>
+              不一定。客户端可能没收到已成功提交的响应；当前创建接口不具备幂等键，重试可能新增第二条记录。
+            </p>
+          </details>
+          <details>
+            <summary>7. timeout 能撤销已经发生的文件写入吗？</summary>
+            <p>
+              不能承诺。它结束本地等待，不自动回滚外部副作用。底层阻塞操作可能仍继续；需要设计事务、提交工作单元或补偿流程。
+            </p>
+          </details>
+          <details>
+            <summary>8. RwLock 能保护两个 Linux 进程共享 JSON 吗？</summary>
+            <p>
+              不能。这是进程内同步原语。多实例共享数据必须依靠跨进程协调或数据库等有明确并发协议的存储。
+            </p>
+          </details>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>术语</th>
+                  <th>一句话</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Future</td>
+                  <td>可被轮询推进、最终产生输出的计算状态</td>
+                </tr>
+                <tr>
+                  <td>Task</td>
+                  <td>被运行时调度的异步执行单元</td>
+                </tr>
+                <tr>
+                  <td>Executor / runtime</td>
+                  <td>负责推进任务，并提供相关 I/O、定时器等支撑</td>
+                </tr>
+                <tr>
+                  <td>Waker</td>
+                  <td>通知任务可能可以继续执行的句柄</td>
+                </tr>
+                <tr>
+                  <td>Guard</td>
+                  <td>代表已经取得的锁许可，离开作用域时释放</td>
+                </tr>
+                <tr>
+                  <td>Backpressure / 背压</td>
+                  <td>把有限处理能力传回工作来源，限制积压</td>
+                </tr>
+                <tr>
+                  <td>Framing / 分帧</td>
+                  <td>从连续字节中识别完整应用消息</td>
+                </tr>
+                <tr>
+                  <td>Cancellation safety</td>
+                  <td>取消与重建操作时是否保留所需进度/不变量</td>
+                </tr>
+                <tr>
+                  <td>Idempotency / 幂等</td>
+                  <td>同一个逻辑操作重复请求不产生额外效果</td>
+                </tr>
+                <tr>
+                  <td>Graceful shutdown</td>
+                  <td>停止接新工作，并按策略处理已有工作后退出</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            第二轮阅读建议从 Tokio 官方教程的 I/O、Channels、Select、Graceful
+            Shutdown
+            继续，再学习你计划采用的数据库驱动。读库文档时优先关注：这个方法是否阻塞、何时分配内存、取消会怎样、返回成功意味着什么。
+          </p>
+          <ul class="sources">
+            <li>
+              <a href="https://tokio.rs/tokio/tutorial">Tokio 教程入口</a>
+            </li>
+            <li>
+              <a href="https://tokio.rs/tokio/tutorial/async"
+                >Future、poll、Waker</a
+              >
+            </li>
+            <li>
+              <a href="https://tokio.rs/tokio/tutorial/spawning"
+                >任务、Send 与 'static</a
+              >
+            </li>
+            <li>
+              <a href="https://tokio.rs/tokio/tutorial/shared-state"
+                >共享状态与锁</a
+              >
+            </li>
+            <li>
+              <a href="https://tokio.rs/tokio/tutorial/framing">TCP 分帧</a>
+            </li>
+            <li>
+              <a href="https://docs.rs/axum/latest/axum/">Axum 路由与提取器</a>
+            </li>
+            <li>
+              <a href="https://docs.rs/tokio/latest/tokio/fs/index.html"
+                >Tokio 文件操作</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html"
+                >阻塞任务</a
+              >
+            </li>
+            <li>
+              <a href="https://docs.rs/tokio/latest/tokio/macro.select.html"
+                >select! 与取消</a
+              >
+            </li>
+            <li>
+              <a href="https://docs.rs/tokio/latest/tokio/time/fn.timeout.html"
+                >timeout</a
+              >
+            </li>
+            <li>
+              <a href="https://www.rfc-editor.org/rfc/rfc9293.html"
+                >TCP 标准 RFC 9293</a
+              >
+            </li>
+          </ul>
+          <p class="small">
+            正文用自己的项目做解释，代码摘录来自本仓库；外部资料链接用于进一步查阅。示例不是完整生产服务器，没有
+            TLS、用户认证或多机部署能力。理解和验证这些明确的边界，就是学习异步工程的一部分。
+          </p>
+        </section>
+      </article>
+      <footer>
+        <p class="small">先预测行为，再运行实验，最后用代码和测试解释差异。</p>
+      </footer>
+    </main>
+    <script>
+      const search = document.querySelector("#search");
+      const chapters = [...document.querySelectorAll("article > section")];
+      const links = [...document.querySelectorAll("nav a")];
+      function filter() {
+        const query = search.value.trim().toLocaleLowerCase();
+        let count = 0;
+        chapters.forEach((section, i) => {
+          const match =
+            !query || section.textContent.toLocaleLowerCase().includes(query);
+          section.hidden = !match;
+          links[i].hidden = !match;
+          if (match) count++;
+        });
+        document.querySelector("#search-status").textContent = query
+          ? `匹配 ${count} / ${chapters.length} 章`
+          : `共 ${chapters.length} 章 · 可搜索关键词`;
+        document.querySelector("#empty").hidden = count !== 0;
+      }
+      search.addEventListener("input", filter);
+      filter();
+      document.querySelectorAll(".copy").forEach((button) =>
+        button.addEventListener("click", async () => {
+          const value = button
+            .closest(".codebox")
+            .querySelector("code").textContent;
+          try {
+            await navigator.clipboard.writeText(value);
+            button.textContent = "已复制";
+          } catch {
+            const range = document.createRange();
+            range.selectNodeContents(
+              button.closest(".codebox").querySelector("code"),
+            );
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            button.textContent = "已选中，请复制";
+          }
+          setTimeout(() => (button.textContent = "复制"), 1800);
+        }),
+      );
+      document.querySelector("#print").addEventListener("click", () => {
+        search.value = "";
+        filter();
+        window.print();
+      });
+      const expandedBeforePrint = new Map();
+      window.addEventListener("beforeprint", () =>
+        document.querySelectorAll("details").forEach((el) => {
+          expandedBeforePrint.set(el, el.open);
+          el.open = true;
+        }),
+      );
+      window.addEventListener("afterprint", () => {
+        expandedBeforePrint.forEach((open, el) => (el.open = open));
+        expandedBeforePrint.clear();
+      });
+      function updatePosition() {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        const progress =
+          max > 0 ? Math.min(100, Math.max(0, (scrollY / max) * 100)) : 0;
+        const bar = document.querySelector("#progress");
+        bar.style.width = `${((innerWidth - bar.getBoundingClientRect().left) * progress) / 100}px`;
+        const visible = chapters.filter((el) => !el.hidden);
+        let current = visible[0];
+        visible.forEach((el) => {
+          if (el.getBoundingClientRect().top < 130) current = el;
+        });
+        links.forEach((link) => {
+          const active = current && link.hash === "#" + current.id;
+          link.classList.toggle("active", Boolean(active));
+          if (active) link.setAttribute("aria-current", "location");
+          else link.removeAttribute("aria-current");
+        });
+      }
+      addEventListener("scroll", updatePosition, { passive: true });
+      updatePosition();
+      const chunks = [
+        [0, 0],
+        [0, 4, 82],
+        [85, 83, 84, 0, 0, 0, 2, 72, 73],
+      ];
+      let step = 0,
+        pending = [],
+        messages = [];
+      const next = document.querySelector("#frame-next");
+      function drawFrame() {
+        document.querySelector("#frame-step").textContent = step
+          ? `已接收第 ${step} / ${chunks.length} 段；一次 read 可能没有完整消息，也可能完成多条消息。`
+          : "尚未接收字节";
+        document.querySelector("#frame-buffer").textContent =
+          "待解析缓冲区：" +
+          (pending.length
+            ? pending.map((x) => x.toString(16).padStart(2, "0")).join(" ")
+            : "空");
+        document.querySelector("#frame-messages").textContent =
+          "已完成消息：" + (messages.length ? messages.join(" / ") : "无");
+        next.disabled = step === chunks.length;
+      }
+      next.addEventListener("click", () => {
+        if (step === chunks.length) return;
+        pending.push(...chunks[step++]);
+        while (pending.length >= 4) {
+          const length =
+            pending[0] * 16777216 +
+            pending[1] * 65536 +
+            pending[2] * 256 +
+            pending[3];
+          if (pending.length < 4 + length) break;
+          messages.push(
+            new TextDecoder().decode(
+              new Uint8Array(pending.slice(4, 4 + length)),
+            ),
+          );
+          pending.splice(0, 4 + length);
+        }
+        drawFrame();
+      });
+      document.querySelector("#frame-reset").addEventListener("click", () => {
+        step = 0;
+        pending = [];
+        messages = [];
+        drawFrame();
+      });
+      drawFrame();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="阅读 kurumochi 的学习笔记与日常记录，支持全文搜索、分类筛选、排序和收藏。"
+    />
+    <title>全部文章 · kurumochi</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css?v=20261021" />
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-about-v2" />
+    <link rel="stylesheet" href="/journal.css?v=20261022-layout" />
+    <script src="/season-theme.js?v=20261021" defer></script>
+  </head>
+  <body class="blog-theme journal-site" data-page="blog" id="top">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景</button
+    ><a class="site-skip" href="#main">跳到主要内容</a>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="kurumochi 首页"
+          ><span class="brand-copy"
+            ><strong>kurumochi<span class="brand-seed">.</span></strong></span
+          ></a
+        >
+        <nav class="desktop-nav" aria-label="主导航">
+          <a class="nav-link" href="/">首页</a
+          ><a class="nav-link is-active" aria-current="page" href="/blog/"
+            >文章</a
+          ><a class="nav-link" href="/portfolio.html">作品</a
+          ><a class="nav-link" href="/archive.html">归档</a
+          ><a class="nav-link" href="/about.html">关于</a>
+        </nav>
+        <div class="topbar-actions">
+          <a class="contact-button" href="mailto:jiezi124168@gmail.com"
+            >我的邮箱 ↗</a
+          ><button
+            class="icon-button menu-button"
+            id="menu-toggle"
+            type="button"
+            aria-label="打开导航菜单"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+      <nav
+        class="mobile-menu"
+        id="mobile-menu"
+        aria-label="移动导航"
+        aria-hidden="true"
+      >
+        <a class="nav-link" href="/">首页</a
+        ><a class="nav-link is-active" aria-current="page" href="/blog/">文章</a
+        ><a class="nav-link" href="/portfolio.html">作品</a
+        ><a class="nav-link" href="/archive.html">归档</a
+        ><a class="nav-link" href="/about.html">关于</a>
+      </nav>
+      <main id="main">
+        <div class="page-width page-intro">
+          <p class="eyebrow">JOURNAL / 学习与日常</p>
+          <h1>全部文章<span class="brand-seed">.</span></h1>
+          <p>关于代码、创作，和一些还没想明白的事。</p>
+        </div>
+        <section
+          class="page-width journal-panel listing-panel"
+          aria-labelledby="list-heading"
+        >
+          <div class="panel-heading">
+            <h2 id="list-heading" tabindex="-1">文章列表</h2>
+            <p id="list-status" role="status">正在加载文章…</p>
+          </div>
+          <form class="search-toolbar" id="search-form" role="search">
+            <label class="search-field"
+              ><span>搜索文章</span
+              ><input
+                type="search"
+                id="post-search"
+                placeholder="搜索标题、摘要或正文…"
+                maxlength="200" /></label
+            ><button class="primary-link" type="submit">搜索</button
+            ><button class="soft-button" id="clear-search" type="button">
+              重置
+            </button>
+          </form>
+          <div class="filter-toolbar">
+            <label
+              >分类
+              <select id="post-category">
+                <option value="">全部分类</option>
+              </select></label
+            ><label
+              >排序
+              <select id="post-sort">
+                <option value="newest">最新发布</option>
+                <option value="oldest">最早发布</option>
+              </select></label
+            ><label class="saved-filter"
+              ><input type="checkbox" id="saved-only" /> 只看收藏</label
+            >
+          </div>
+          <p class="storage-hint">
+            收藏保存在当前浏览器，清除浏览器数据后会消失。
+          </p>
+          <div id="post-list" aria-busy="true"></div>
+          <nav
+            id="list-pagination"
+            class="list-pagination"
+            aria-label="文章分页"
+          ></nav>
+        </section>
+      </main>
+      <footer class="footer page-width site-footer">
+        <div>
+          <a class="footer-brand" href="/">kurumochi.</a>
+          <p>学习的痕迹，和光里的想象。</p>
+          <small>© <span data-year></span> kurumochi</small>
+        </div>
+        <nav aria-label="页脚导航">
+          <a href="/blog/">全部文章</a><a href="/portfolio.html">Blender 作品</a
+          ><a href="/archive.html">文章归档</a><a href="/about.html">关于本站</a
+          ><a
+            href="https://github.com/kurunomochi"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub ↗</a
+          ><a href="#top">回到顶部 ↑</a>
+        </nav>
+      </footer>
+    </div>
+    <p id="site-notice" class="site-notice" role="status" hidden></p>
+    <noscript
+      ><p class="noscript-note">
+        文章与作品需要启用 JavaScript
+        才能加载。你仍可通过导航浏览页面，或通过邮箱与我联系。
+      </p></noscript
+    >
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/journal.js?v=20261024-video"></script>
+    <script src="/blog.js?v=20261021"></script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650">
+  <rect width="900" height="650" fill="#d5c7af"/>
+  <rect y="430" width="900" height="220" fill="#657a69"/>
+  <circle cx="728" cy="130" r="71" fill="#c85b42"/>
+  <path d="M120 520C170 325 252 278 314 490" fill="none" stroke="#1f2523" stroke-width="28"/>
+  <path d="M312 490C382 296 471 310 533 505" fill="none" stroke="#f5f3ee" stroke-width="25"/>
+  <circle cx="150" cy="162" r="17" fill="#1f2523"/><circle cx="201" cy="127" r="10" fill="#1f2523"/>
+  <text x="54" y="82" fill="#1f2523" font-family="monospace" font-size="18" letter-spacing="3">SLOW WEEKEND</text>
+</svg>

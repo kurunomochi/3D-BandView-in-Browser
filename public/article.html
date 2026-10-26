@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="kurumochi 的学习笔记与日常记录。" />
+    <title>文章 · kurumochi</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css?v=20261021" />
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-about-v2" />
+    <link rel="stylesheet" href="/journal.css?v=20261022-layout" />
+    <script src="/season-theme.js?v=20261021" defer></script>
+    <link rel="stylesheet" href="/media.css?v=20261024-video" />
+  </head>
+  <body class="blog-theme journal-site" data-page="blog" id="top">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景</button
+    ><a class="site-skip" href="#main">跳到主要内容</a>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="kurumochi 首页"
+          ><span class="brand-copy"
+            ><strong>kurumochi<span class="brand-seed">.</span></strong></span
+          ></a
+        >
+        <nav class="desktop-nav" aria-label="主导航">
+          <a class="nav-link" href="/">首页</a
+          ><a class="nav-link is-active" aria-current="page" href="/blog/"
+            >文章</a
+          ><a class="nav-link" href="/portfolio.html">作品</a
+          ><a class="nav-link" href="/archive.html">归档</a
+          ><a class="nav-link" href="/about.html">关于</a>
+        </nav>
+        <div class="topbar-actions">
+          <a class="contact-button" href="mailto:jiezi124168@gmail.com"
+            >我的邮箱 ↗</a
+          ><button
+            class="icon-button menu-button"
+            id="menu-toggle"
+            type="button"
+            aria-label="打开导航菜单"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+      <nav
+        class="mobile-menu"
+        id="mobile-menu"
+        aria-label="移动导航"
+        aria-hidden="true"
+      >
+        <a class="nav-link" href="/">首页</a
+        ><a class="nav-link is-active" aria-current="page" href="/blog/">文章</a
+        ><a class="nav-link" href="/portfolio.html">作品</a
+        ><a class="nav-link" href="/archive.html">归档</a
+        ><a class="nav-link" href="/about.html">关于</a>
+      </nav>
+      <main id="main">
+        <div class="reading-progress" aria-hidden="true">
+          <span id="reading-progress"></span>
+        </div>
+        <div class="page-width article-breadcrumb">
+          <a href="/">首页</a> / <a href="/blog/">文章</a> / <span>正文</span>
+        </div>
+        <div class="page-width article-layout">
+          <article class="standalone-article" id="article-content">
+            <header class="standalone-article-header">
+              <div class="article-detail-meta" id="article-meta"></div>
+              <h1 id="article-title">正在加载文章…</h1>
+              <p class="standalone-excerpt" id="article-excerpt"></p>
+              <div class="reading-tools" id="reading-tools" hidden>
+                <button
+                  type="button"
+                  class="soft-button"
+                  id="save-post"
+                  aria-pressed="false"
+                >
+                  收藏文章</button
+                ><button type="button" class="soft-button" id="share-post">
+                  复制链接</button
+                ><label
+                  >字号
+                  <select id="reading-size" aria-label="正文字号">
+                    <option value="17">标准</option>
+                    <option value="19">较大</option>
+                    <option value="21">大字</option>
+                  </select></label
+                >
+              </div>
+              <p class="storage-hint" id="save-hint" hidden>
+                收藏仅保存在当前浏览器。
+              </p>
+            </header>
+            <div
+              class="standalone-body"
+              id="article-body"
+              aria-busy="true"
+            ></div>
+            <nav
+              id="adjacent-posts"
+              class="adjacent-posts"
+              aria-label="相邻文章"
+            ></nav>
+            <section id="related-posts" class="related-posts" hidden>
+              <h2>继续阅读</h2>
+              <div id="related-list"></div>
+            </section>
+            <footer class="standalone-footer">
+              <a href="/blog/">← 返回全部文章</a><a href="#top">回到顶部 ↑</a>
+            </footer>
+          </article>
+          <aside class="article-sidebar">
+            <details open id="toc-details">
+              <summary>文章目录</summary>
+              <nav id="article-toc" aria-label="文章目录">
+                <p>正在整理目录…</p>
+              </nav>
+            </details>
+            <p class="storage-hint" id="reading-status" role="status">
+              阅读进度 0%
+            </p>
+            <a class="text-link" href="/archive.html">浏览文章归档 →</a>
+          </aside>
+        </div>
+      </main>
+      <footer class="footer page-width site-footer">
+        <div>
+          <a class="footer-brand" href="/">kurumochi.</a>
+          <p>学习的痕迹，和光里的想象。</p>
+          <small>© <span data-year></span> kurumochi</small>
+        </div>
+        <nav aria-label="页脚导航">
+          <a href="/blog/">全部文章</a><a href="/portfolio.html">Blender 作品</a
+          ><a href="/archive.html">文章归档</a><a href="/about.html">关于本站</a
+          ><a
+            href="https://github.com/kurunomochi"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub ↗</a
+          ><a href="#top">回到顶部 ↑</a>
+        </nav>
+      </footer>
+    </div>
+    <p id="site-notice" class="site-notice" role="status" hidden></p>
+    <noscript
+      ><p class="noscript-note">
+        文章与作品需要启用 JavaScript
+        才能加载。你仍可通过导航浏览页面，或通过邮箱与我联系。
+      </p></noscript
+    >
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/journal.js?v=20261024-video"></script>
+    <script src="/reader.js?v=20261024-video"></script>
+  </body>
+</html>

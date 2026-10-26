@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650">
+  <rect width="900" height="650" fill="#e7ad7e"/>
+  <path d="M0 518L900 176V650H0Z" fill="#c85b42"/>
+  <rect x="112" y="120" width="330" height="330" fill="#657a69" transform="rotate(-14 277 285)"/>
+  <circle cx="653" cy="188" r="94" fill="#f5f3ee"/>
+  <circle cx="653" cy="188" r="49" fill="#1f2523"/>
+  <path d="M535 485H789" stroke="#1f2523" stroke-width="14"/>
+  <path d="M535 523H705" stroke="#1f2523" stroke-width="5"/>
+  <text x="54" y="82" fill="#1f2523" font-family="monospace" font-size="18" letter-spacing="3">COLOR STUDY</text>
+</svg>

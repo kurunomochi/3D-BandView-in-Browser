@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650">
+  <rect width="900" height="650" fill="#26312e"/>
+  <rect x="72" y="90" width="756" height="474" fill="#e7ad7e"/>
+  <rect x="122" y="140" width="390" height="110" fill="#f5f3ee"/>
+  <rect x="122" y="286" width="608" height="18" fill="#657a69"/>
+  <rect x="122" y="334" width="520" height="18" fill="#657a69"/>
+  <rect x="122" y="382" width="270" height="18" fill="#c85b42"/>
+  <circle cx="708" cy="206" r="68" fill="#c85b42"/>
+  <path d="M636 477H748M692 421V533" stroke="#1f2523" stroke-width="12"/>
+  <text x="122" y="215" fill="#1f2523" font-family="monospace" font-size="23" letter-spacing="3">NOTES</text>
+</svg>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>作品详情 · kurumochi</title>
+    <link rel="stylesheet" href="/portfolio.css" />
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/work.js?v=20261025-3d" defer></script>
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-refactor" />
+    <script src="/season-theme.js?v=20261019-seasons" defer></script>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      .header nav {
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      @media (max-width: 640px) {
+        .header {
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+        .header nav {
+          order: 3;
+          width: 100%;
+          justify-content: center;
+        }
+        .header nav span {
+          display: none;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="/media.css?v=20261024-video" />
+    <link rel="stylesheet" href="/model-viewer.css?v=20261025-3d" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/vendor/three/build/three.module.js",
+          "three/addons/": "/vendor/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body class="gallery-theme">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景
+    </button>
+    <header class="header wrap">
+      <a class="wordmark" href="/portfolio.html"
+        >kurumochi<span class="brand-dot"></span
+      ></a>
+      <nav aria-label="主导航">
+        <a href="/portfolio.html">作品 Works</a
+        ><a href="/blog/">文章 Journal</a> <a href="/archive.html">归档</a
+        ><a href="/about.html">关于我</a>
+      </nav>
+    </header>
+    <main id="detail" class="wrap">
+      <p class="loading" role="status">正在加载作品…</p>
+    </main>
+    <dialog id="lightbox" class="lightbox" aria-label="作品大图">
+      <button id="close-lightbox" type="button">关闭 ×</button
+      ><img id="lightbox-image" alt="" />
+    </dialog>
+    <footer class="footer wrap">
+      <a href="/portfolio.html">← 返回作品集</a
+      ><span>KURUMOCHI / BLENDER WORKS</span>
+    </footer>
+  </body>
+</html>

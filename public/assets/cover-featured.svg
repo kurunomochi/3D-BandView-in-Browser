@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780">
+  <rect width="1200" height="780" fill="#d9d7cf"/>
+  <circle cx="220" cy="205" r="174" fill="#c85b42"/>
+  <circle cx="220" cy="205" r="92" fill="#e7ad7e"/>
+  <rect x="415" y="80" width="540" height="620" fill="#657a69" transform="rotate(11 685 390)"/>
+  <rect x="512" y="154" width="348" height="420" fill="#f5f3ee" transform="rotate(11 686 364)"/>
+  <path d="M80 644H1108" stroke="#1f2523" stroke-width="3"/>
+  <path d="M89 675H460" stroke="#1f2523" stroke-width="12"/>
+  <path d="M89 701H286" stroke="#1f2523" stroke-width="4"/>
+  <text x="970" y="95" fill="#1f2523" font-family="monospace" font-size="20" letter-spacing="4">SPACE / 01</text>
+</svg>

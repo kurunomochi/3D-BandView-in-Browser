@@ -1,0 +1,25 @@
+services:
+  portfolio:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      BLOG_ADMIN_USERNAME: ${BLOG_ADMIN_USERNAME:-admin}
+      BLOG_ADMIN_PASSWORD: ${BLOG_ADMIN_PASSWORD:?Set a strong admin password in .env}
+      BLOG_BIND: "0.0.0.0:3000"
+      BLOG_DATA_DIR: "/app/data"
+    volumes:
+      - ./data:/app/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

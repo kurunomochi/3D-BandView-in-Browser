@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="关于 kurumochi：一名大专电计学生，记录编程学习与 Blender 创作。"
+    />
+    <title>关于 · kurumochi</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css?v=20261021" />
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-about-v2" />
+    <link rel="stylesheet" href="/journal.css?v=20261022-layout" />
+    <script src="/season-theme.js?v=20261021" defer></script>
+  </head>
+  <body class="blog-theme journal-site" data-page="about" id="top">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景</button
+    ><a class="site-skip" href="#main">跳到主要内容</a>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="kurumochi 首页"
+          ><span class="brand-copy"
+            ><strong>kurumochi<span class="brand-seed">.</span></strong></span
+          ></a
+        >
+        <nav class="desktop-nav" aria-label="主导航">
+          <a class="nav-link" href="/">首页</a
+          ><a class="nav-link" href="/blog/">文章</a
+          ><a class="nav-link" href="/portfolio.html">作品</a
+          ><a class="nav-link" href="/archive.html">归档</a
+          ><a class="nav-link is-active" aria-current="page" href="/about.html"
+            >关于</a
+          >
+        </nav>
+        <div class="topbar-actions">
+          <a class="contact-button" href="mailto:jiezi124168@gmail.com"
+            >我的邮箱 ↗</a
+          ><button
+            class="icon-button menu-button"
+            id="menu-toggle"
+            type="button"
+            aria-label="打开导航菜单"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+      <nav
+        class="mobile-menu"
+        id="mobile-menu"
+        aria-label="移动导航"
+        aria-hidden="true"
+      >
+        <a class="nav-link" href="/">首页</a
+        ><a class="nav-link" href="/blog/">文章</a
+        ><a class="nav-link" href="/portfolio.html">作品</a
+        ><a class="nav-link" href="/archive.html">归档</a
+        ><a class="nav-link is-active" aria-current="page" href="/about.html"
+          >关于</a
+        >
+      </nav>
+      <main id="main">
+        <div class="page-width page-intro">
+          <p class="eyebrow">ABOUT / 关于我与这里</p>
+          <h1>你好，我是 kurumochi<span class="brand-seed">.</span></h1>
+          <p>还在学习，也一直在尝试。</p>
+        </div>
+        <section class="page-width journal-panel about-page">
+          <img
+            class="about-avatar"
+            src="/assets/avater.png"
+            alt="kurumochi 的头像"
+            width="120"
+            height="120"
+          />
+          <div>
+            <h2>我是一名大专电计学生</h2>
+            <p>
+              在博客里记录学习，在 Blender
+              里练习创作。这里收集我的编程笔记、学习过程，还有关于空间和光线的一些想象。
+            </p>
+            <div class="about-topics">
+              <span>Rust / 异步工程</span><span>C++ / 学习笔记</span
+              ><span>Blender / 三维创作</span>
+            </div>
+            <div class="hero-actions">
+              <a class="primary-link" href="/blog/">阅读我的文章 →</a
+              ><a class="soft-button" href="/portfolio.html">看看作品</a>
+            </div>
+          </div>
+        </section>
+        <section class="page-width journal-panel about-page-info">
+          <div>
+            <p class="eyebrow">GET IN TOUCH</p>
+            <h2>欢迎来聊聊</h2>
+            <p>关于学习、代码，或是一个 Blender 场景，都可以。</p>
+            <p>
+              <a class="text-link" href="mailto:jiezi124168@gmail.com"
+                >jiezi124168@gmail.com ↗</a
+              >
+            </p>
+            <p>
+              <a
+                class="text-link"
+                href="https://github.com/kurunomochi"
+                target="_blank"
+                rel="noreferrer"
+                >GitHub / kurunomochi ↗</a
+              >
+            </p>
+          </div>
+          <div>
+            <p class="eyebrow">ABOUT THIS SITE</p>
+            <h2>一个慢慢生长的网站</h2>
+            <p>使用 Rust 与 Axum 构建后端，文章和作品由我自己整理发布。</p>
+            <p>
+              收藏和阅读字号仅保存在你的浏览器里，不需要注册账户。背景视频可以通过右下角按钮暂停。
+            </p>
+            <a class="text-link" href="/archive.html">看看过去的记录 →</a>
+          </div>
+        </section>
+      </main>
+      <footer class="footer page-width site-footer">
+        <div>
+          <a class="footer-brand" href="/">kurumochi.</a>
+          <p>学习的痕迹，和光里的想象。</p>
+          <small>© <span data-year></span> kurumochi</small>
+        </div>
+        <nav aria-label="页脚导航">
+          <a href="/blog/">全部文章</a><a href="/portfolio.html">Blender 作品</a
+          ><a href="/archive.html">文章归档</a><a href="/about.html">关于本站</a
+          ><a
+            href="https://github.com/kurunomochi"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub ↗</a
+          ><a href="#top">回到顶部 ↑</a>
+        </nav>
+      </footer>
+    </div>
+    <p id="site-notice" class="site-notice" role="status" hidden></p>
+    <noscript
+      ><p class="noscript-note">
+        文章与作品需要启用 JavaScript
+        才能加载。你仍可通过导航浏览页面，或通过邮箱与我联系。
+      </p></noscript
+    >
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/journal.js?v=20261024-video"></script>
+  </body>
+</html>
