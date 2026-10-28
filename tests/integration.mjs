@@ -23,6 +23,8 @@ async function start() {
         BLOG_PUBLIC_DIR: path.resolve("public"),
         BLOG_ADMIN_USERNAME: "admin",
         BLOG_ADMIN_PASSWORD: password,
+        // Only used to test BLEND upload boundaries; these sessions are cancelled before conversion.
+        BLOG_MODEL_WORKER: path.resolve("scripts/export-model.py"),
       },
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -169,6 +171,140 @@ try {
   assert.equal(
     (await call("/api/models/config", { headers: auth(token) })).status,
     200,
+  );
+  const uploadConfig = await (
+    await call("/api/models/config", { headers: auth(token) })
+  ).json();
+  assert.equal(uploadConfig.blend_max_bytes, 1024 ** 3);
+  assert.equal(uploadConfig.glb_max_bytes, 50 * 1024 ** 2);
+  const sessionRoute = "/api/model-upload-sessions";
+  assert.equal(
+    (await call(sessionRoute, json({ format: "glb", size: 32 }))).status,
+    401,
+  );
+  assert.equal(
+    (await call(sessionRoute + "/unknown", { method: "PUT", body: "a" }))
+      .status,
+    401,
+  );
+  assert.equal(
+    (await call(sessionRoute + "/unknown/complete", { method: "POST" })).status,
+    401,
+  );
+  for (const invalid of [
+    { format: "blend", size: 1024 ** 3 + 1 },
+    { format: "glb", size: 50 * 1024 ** 2 + 1 },
+    { format: "blend", size: 0 },
+  ]) {
+    assert.equal((await call(sessionRoute, json(invalid, token))).status, 400);
+  }
+  response = await call(
+    sessionRoute,
+    json({ format: "blend", size: 1024 ** 3 }, token),
+  );
+  assert.equal(response.status, 201);
+  const largeSession = await response.json();
+  assert.equal(
+    (await call(sessionRoute, json({ format: "glb", size: 32 }, token))).status,
+    409,
+  );
+  assert.equal(
+    (
+      await call(sessionRoute + "/" + largeSession.id, {
+        method: "DELETE",
+        headers: auth(token),
+      })
+    ).status,
+    204,
+  );
+  const chunkModel = triangleGlb();
+  response = await call(
+    sessionRoute,
+    json({ format: "glb", size: chunkModel.length }, token),
+  );
+  const chunkSession = await response.json();
+  const chunkRoute = sessionRoute + "/" + chunkSession.id;
+  const putChunk = (offset, body) =>
+    call(chunkRoute + "?offset=" + offset, {
+      method: "PUT",
+      headers: auth(token),
+      body,
+    });
+  assert.equal((await putChunk(4, chunkModel.subarray(4))).status, 400);
+  assert.equal(
+    (await putChunk(0, Buffer.alloc(8 * 1024 ** 2 + 1))).status,
+    400,
+  );
+  assert.equal((await putChunk(0, chunkModel.subarray(0, 16))).status, 200);
+  assert.equal((await putChunk(0, chunkModel.subarray(0, 16))).status, 200);
+  const changedHeader = Buffer.from(chunkModel.subarray(0, 16));
+  changedHeader[8] ^= 1;
+  assert.equal((await putChunk(0, changedHeader)).status, 409);
+  assert.equal(
+    (
+      await call(chunkRoute + "/complete", {
+        method: "POST",
+        headers: auth(token),
+      })
+    ).status,
+    400,
+  );
+  assert.equal((await putChunk(16, chunkModel.subarray(16))).status, 200);
+  response = await call(chunkRoute + "/complete", {
+    method: "POST",
+    headers: auth(token),
+  });
+  assert.equal(response.status, 202);
+  let chunkJob = await response.json();
+  assert.equal(
+    (
+      await (
+        await call(chunkRoute + "/complete", {
+          method: "POST",
+          headers: auth(token),
+        })
+      ).json()
+    ).id,
+    chunkJob.id,
+  );
+  for (let i = 0; i < 100 && chunkJob.status === "processing"; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    chunkJob = await (
+      await call("/api/model-jobs/" + chunkJob.id, { headers: auth(token) })
+    ).json();
+  }
+  assert.equal(chunkJob.status, "ready", chunkJob.message);
+  assert.deepEqual(
+    Buffer.from(await (await call(chunkJob.url)).arrayBuffer()),
+    chunkModel,
+  );
+  // Cancel removes partial data and releases the sole upload/conversion slot.
+  response = await call(
+    sessionRoute,
+    json({ format: "glb", size: chunkModel.length }, token),
+  );
+  const cancelled = await response.json();
+  assert.equal(
+    (
+      await call(sessionRoute + "/" + cancelled.id + "?offset=0", {
+        method: "PUT",
+        headers: auth(token),
+        body: chunkModel.subarray(0, 16),
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await call(sessionRoute + "/" + cancelled.id, {
+        method: "DELETE",
+        headers: auth(token),
+      })
+    ).status,
+    204,
+  );
+  await assert.rejects(
+    readFile(path.join(dataDir, "model-jobs", cancelled.id, "upload.part")),
   );
   for (const invalid of [Buffer.from("not glb"), triangleGlb(true)]) {
     assert.equal(

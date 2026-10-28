@@ -283,26 +283,92 @@ $("#model-file").onchange = async (event) => {
   if (
     !["blend", "glb"].includes(format) ||
     !file.size ||
-    file.size > 50 * 1024 * 1024
+    file.size > (format === "blend" ? 1024 : 50) * 1024 * 1024
   ) {
-    message("#model-message", "请选择不超过 50 MB 的 .blend 或 .glb 文件");
+    message("#model-message", ".blend 最大 1 GiB（1024 MiB），GLB 最大 50 MiB");
     event.target.value = "";
     return;
   }
   uploading = true;
+  const controller = new AbortController();
+  const cancelUpload = $("#cancel-model-upload");
+  let sessionId = "";
+  let submitted = false;
   const controls = [
-    ...$("#dashboard").querySelectorAll("button, input, textarea"),
+    ...$("#dashboard").querySelectorAll(
+      "button:not(#cancel-model-upload), input, textarea",
+    ),
   ];
   const previous = controls.map((element) => element.disabled);
   controls.forEach((element) => (element.disabled = true));
+  cancelUpload.hidden = false;
+  cancelUpload.disabled = false;
+  cancelUpload.onclick = () => {
+    controller.abort();
+    cancelUpload.disabled = true;
+    message("#model-message", "正在取消上传…");
+  };
   message("#model-message", `正在上传 ${file.name}，请勿关闭页面…`);
   try {
-    let job = await api(`/api/model-uploads?format=${format}`, {
+    const session = await api("/api/model-upload-sessions", {
       method: "POST",
-      body: file,
-      headers: { "Content-Type": "application/octet-stream" },
-      signal: AbortSignal.timeout(600000),
+      body: JSON.stringify({ format, size: file.size }),
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]),
     });
+    sessionId = session.id;
+    const retry = async (route, options) => {
+      for (let attempt = 0; ; attempt++) {
+        controller.signal.throwIfAborted();
+        try {
+          return await api(route, {
+            ...options,
+            signal: AbortSignal.any([
+              controller.signal,
+              AbortSignal.timeout(300000),
+            ]),
+          });
+        } catch (error) {
+          if (
+            controller.signal.aborted ||
+            attempt >= 2 ||
+            (error.status >= 400 && error.status < 500)
+          )
+            throw error;
+          message(
+            "#model-message",
+            `网络中断，正在重试当前分片（${attempt + 1}/2）…`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+    };
+    for (let offset = 0; offset < file.size; ) {
+      controller.signal.throwIfAborted();
+      const end = Math.min(offset + session.chunk_bytes, file.size);
+      const result = await retry(
+        `/api/model-upload-sessions/${encodeURIComponent(sessionId)}?offset=${offset}`,
+        {
+          method: "PUT",
+          body: file.slice(offset, end),
+          headers: { "Content-Type": "application/octet-stream" },
+        },
+      );
+      if (result.received !== end)
+        throw new Error("服务器上传进度不一致，请重新选择文件");
+      offset = end;
+      message(
+        "#model-message",
+        `上传 ${Math.floor((offset / file.size) * 100)}% · ${(offset / 1048576).toFixed(1)} / ${(file.size / 1048576).toFixed(1)} MiB，请勿关闭页面…`,
+      );
+    }
+    // Once complete is sent, the server may already be converting even if its response is lost.
+    cancelUpload.hidden = true;
+    let job = await retry(
+      `/api/model-upload-sessions/${encodeURIComponent(sessionId)}/complete`,
+      { method: "POST" },
+    );
+    submitted = true;
     const deadline = Date.now() + 180000;
     while (job.status === "processing") {
       message("#model-message", job.message);
@@ -323,11 +389,20 @@ $("#model-file").onchange = async (event) => {
   } catch (error) {
     message(
       "#model-message",
-      error.status === 404
-        ? "转换任务不存在，服务器可能已重启，请重新上传。"
-        : error.message,
+      controller.signal.aborted
+        ? "上传已取消，原作品保持不变。"
+        : error.status === 404
+          ? "转换任务不存在，服务器可能已重启，请重新上传。"
+          : error.message,
     );
   } finally {
+    if (sessionId && !submitted) {
+      await api(`/api/model-upload-sessions/${encodeURIComponent(sessionId)}`, {
+        method: "DELETE",
+        signal: AbortSignal.timeout(30000),
+      }).catch(() => {});
+    }
+    cancelUpload.hidden = true;
     uploading = false;
     controls.forEach((element, i) => (element.disabled = previous[i]));
     event.target.value = "";

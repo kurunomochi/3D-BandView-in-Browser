@@ -7,7 +7,7 @@
     <title>作品管理 · kurumochi</title>
     <link rel="stylesheet" href="/portfolio.css" />
     <script src="/common.js?v=20261024-video"></script>
-    <script src="/studio.js?v=20261025-3d" defer></script>
+    <script src="/studio.js?v=20261027-large-upload" defer></script>
     <link rel="stylesheet" href="/media.css?v=20261024-video" />
     <link rel="stylesheet" href="/model-viewer.css?v=20261025-3d" />
     <script type="importmap">
@@ -131,9 +131,11 @@
                 accept=".blend,.glb"
             /></label>
             <p>
-              最大 50 MB。上传 .blend 后自动转换，通常需要几秒到两分钟。请先在
-              Blender 使用「文件 → 外部数据 →
-              打包资源」，只上传可信的工程。大型场景建议简化后导出 GLB。
+              .blend 最大 1 GiB（1024 MiB），GLB 最大 50
+              MiB。文件分片上传，失败分片自动重试；上传期间请勿关闭页面。上传
+              .blend 后自动转换。请先在 Blender 使用「文件 → 外部数据 →
+              打包资源」，只上传可信的工程。上传上限不代表转换能力：服务器内存有限，复杂工程可能转换失败；转换结果最大
+              100 MiB，建议大场景先自行导出 GLB。
             </p>
             <p>
               展示当前场景的可见网格和当前姿态；程序化材质、毛发、体积、模拟和动画不保证还原，请烘焙为贴图或网格。发布后访客可获取用于展示的
@@ -142,6 +144,14 @@
             <p id="model-message" class="message" role="status">
               可选：为作品增加能旋转和移动视角的 3D 预览。
             </p>
+            <button
+              id="cancel-model-upload"
+              class="btn secondary"
+              type="button"
+              hidden
+            >
+              取消上传
+            </button>
             <button
               id="remove-model"
               type="button"

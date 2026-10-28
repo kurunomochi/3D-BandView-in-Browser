@@ -21,6 +21,9 @@ use tokio::{
 };
 use uuid::Uuid;
 
+#[path = "model_uploads.rs"]
+mod chunked;
+
 const LIMIT: usize = 50 * 1024 * 1024;
 const OUTPUT_LIMIT: u64 = 100 * 1024 * 1024;
 pub struct ModelService {
@@ -28,6 +31,7 @@ pub struct ModelService {
     worker: Option<PathBuf>,
     gate: Arc<Semaphore>,
     jobs: Mutex<HashMap<String, (Instant, Job)>>,
+    uploads: chunked::Uploads,
 }
 #[derive(Clone, Serialize)]
 struct Job {
@@ -47,11 +51,13 @@ impl ModelService {
             worker,
             gate: Arc::new(Semaphore::new(1)),
             jobs: Mutex::new(HashMap::new()),
+            uploads: Mutex::new(HashMap::new()),
         }
     }
 }
 pub fn routes() -> Router<SharedState> {
     Router::new()
+        .merge(chunked::routes())
         .route("/models/config", get(config))
         .route("/model-jobs/{id}", get(status))
         .route(
@@ -60,7 +66,10 @@ pub fn routes() -> Router<SharedState> {
         )
 }
 async fn config(State(state): State<SharedState>) -> Json<serde_json::Value> {
-    Json(serde_json::json!({"blend_available": state.models.worker.is_some(), "max_bytes": LIMIT}))
+    Json(
+        serde_json::json!({"blend_available": state.models.worker.is_some(), "max_bytes": LIMIT,
+        "blend_max_bytes": chunked::BLEND_LIMIT, "glb_max_bytes": LIMIT, "chunk_bytes": chunked::CHUNK_LIMIT}),
+    )
 }
 pub fn safe_model_url(url: &str) -> bool {
     url.strip_prefix("/uploads/models/")
@@ -136,6 +145,16 @@ async fn upload(
         .await
         .map_err(AppError::storage)?;
     drop(bytes);
+    let job = launch_job(state, id, directory, input.format, permit).await;
+    Ok((StatusCode::ACCEPTED, Json(job)))
+}
+async fn launch_job(
+    state: SharedState,
+    id: String,
+    directory: PathBuf,
+    format: String,
+    permit: tokio::sync::OwnedSemaphorePermit,
+) -> Job {
     let job = Job {
         id: id.clone(),
         status: "processing".into(),
@@ -156,7 +175,7 @@ async fn upload(
         jobs.insert(id.clone(), (Instant::now(), job.clone()));
     }
     tokio::spawn(async move {
-        let result = convert(&state, &id, &directory, &input.format).await;
+        let result = convert(&state, &id, &directory, &format).await;
         let mut jobs = state.models.jobs.lock().await;
         if let Some((_, job)) = jobs.get_mut(&id) {
             match result {
@@ -173,7 +192,7 @@ async fn upload(
         }
         drop(permit);
     });
-    Ok((StatusCode::ACCEPTED, Json(job)))
+    job
 }
 async fn convert(
     state: &SharedState,
